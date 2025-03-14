@@ -5,10 +5,6 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
-[tool.flake8]
-max-line-length = 120
-exclude = [".git", "__pycache__", "build", "dist"]
-
 [tool.black]
 line-length = 120
 target-version = ["py38"]
@@ -25,4 +21,4 @@ exclude = '''
   | build
   | dist
 )/
-''' 
+'''

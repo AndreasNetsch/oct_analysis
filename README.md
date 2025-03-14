@@ -50,6 +50,20 @@ Run tests with pytest:
 pytest
 ```
 
+### Code Formatting and Linting
+
+This project uses pre-commit hooks to ensure code quality. After installing the development dependencies, set up the pre-commit hooks:
+
+```bash
+pre-commit install
+```
+
+This will automatically format your code with Black and check it with Flake8 before each commit. You can also run the hooks manually:
+
+```bash
+pre-commit run --all-files
+```
+
 ### Building the package
 
 ```bash
