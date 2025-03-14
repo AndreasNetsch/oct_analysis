@@ -78,6 +78,35 @@ This project uses GitHub Actions for:
 - Linting the code
 - Building and publishing the package to PyPI when a new version tag is pushed
 
+### Creating Releases
+
+The CI/CD pipeline is configured to automatically build and publish the package to PyPI when a new version tag is pushed to the repository. This process ensures that only properly versioned, tagged releases get published.
+
+To create and publish a new release:
+
+1. Update the version number in `setup.py`
+2. Commit your changes:
+   ```bash
+   git add setup.py
+   git commit -m "Bump version to x.y.z"
+   ```
+3. Create a new version tag (tag name must start with "v"):
+   ```bash
+   git tag vx.y.z
+   ```
+4. Push the tag to GitHub:
+   ```bash
+   git push origin vx.y.z
+   ```
+
+Once the tag is pushed, GitHub Actions will:
+
+1. Run all tests on multiple Python versions
+2. If tests pass, build the package
+3. Publish the package to PyPI using the configured PyPI API token
+
+Note: Make sure you've added a `PYPI_API_TOKEN` secret to your GitHub repository settings under "Settings > Secrets and Variables > Actions" before triggering a release.
+
 ## License
 
 MIT License
