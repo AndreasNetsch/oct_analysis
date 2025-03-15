@@ -1,5 +1,5 @@
 """
-andylib - A library for image processing functions
+oct_analysis - A library for image processing functions
 """
 
 from .image_processing import read_tiff

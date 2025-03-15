@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from unittest import mock
 
-from andylib.image_processing import read_tiff
+from oct_analysis.image_processing import read_tiff
 
 
 def test_read_tiff_file_not_found():

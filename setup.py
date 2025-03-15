@@ -6,7 +6,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(
-    name="andylib",
+    name="oct_analysis",
     version="0.1.0",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
@@ -26,7 +26,7 @@ setup(
     description="A library for image processing functions.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/andylib",
+    url="https://github.com/yourusername/oct_analysis",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

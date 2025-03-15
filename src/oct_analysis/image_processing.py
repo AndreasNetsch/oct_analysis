@@ -1,5 +1,5 @@
 """
-Image processing functions for andylib
+Image processing functions for oct_analysis
 """
 
 import cv2

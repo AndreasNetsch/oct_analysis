@@ -1,11 +1,11 @@
-# andylib
+# oct_analysis
 
 A library for image processing functions.
 
 ## Installation
 
 ```bash
-pip install andylib
+pip install oct_analysis
 ```
 
 ## Features
@@ -16,7 +16,7 @@ pip install andylib
 
 ```python
 import numpy as np
-from andylib import read_tiff
+from oct_analysis import read_tiff
 
 # Read a TIFF image
 image = read_tiff('path/to/your/image.tiff')
@@ -30,8 +30,8 @@ print(f"Image shape: {image.shape}")
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/andylib.git
-cd andylib
+git clone https://github.com/yourusername/oct_analysis.git
+cd oct_analysis
 ```
 
 2. Create a virtual environment and install development dependencies:
@@ -69,6 +69,28 @@ pre-commit run --all-files
 ```bash
 python -m build
 ```
+
+### Documentation
+
+This project uses Sphinx for documentation. To build the documentation locally:
+
+```bash
+cd docs
+make html
+```
+
+The generated documentation will be available in `docs/build/html/index.html`.
+
+#### ReadTheDocs Integration
+
+The documentation is also configured to be built automatically on [ReadTheDocs](https://readthedocs.org/). To set it up:
+
+1. Push your code to GitHub
+2. Sign up for a ReadTheDocs account
+3. Import your repository on ReadTheDocs
+4. ReadTheDocs will automatically build and host the documentation
+
+You can customize the build process by modifying `.readthedocs.yml` and the Sphinx configuration files in the `docs` directory.
 
 ## CI/CD
 

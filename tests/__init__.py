@@ -1,3 +1,3 @@
 """
-Test package for andylib
+Test package for oct_analysis
 """
