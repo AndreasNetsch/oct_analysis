@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="oct_analysis",
-    version="0.1.0",
+    version="0.1.1",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=["numpy", "opencv-python"],

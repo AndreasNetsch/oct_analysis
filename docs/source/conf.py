@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 project = "oct_analysis"
 copyright = "2025, Andreas Netsch"
 author = "Andreas Netsch"
-release = "0.1.0"
+release = "0.1.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -30,7 +30,7 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = []
 
-language = "de"
+language = "en"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
