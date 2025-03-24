@@ -3,11 +3,14 @@ Image processing functions for oct_analysis
 """
 
 import cv2
+import tifffile as tiff
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import tkinter as tk
-from tkinter import filedialog
+import customtkinter as ctk
+
+
+
 
 
 def read_tiff(file_path):
@@ -55,9 +58,9 @@ def select_tiff_folder():
     str
         The path to the selected folder.
     """
-    root = tk.Tk()
+    root = ctk.CTk()
     root.withdraw()  # Hide the root window
-    folder_path = filedialog.askdirectory(title="Select Folder")
+    folder_path = ctk.filedialog.askdirectory(title="Select Folder")
     if folder_path:
         print(f"Selected Folder: {folder_path}")
     else:
@@ -282,7 +285,42 @@ def voxel_count(img, voxel_size):
     print(result_text)  # Print results to console
     return volume
 
-def generate_Height_Map(img, voxel_size, filename):
+def generate_Height_Map(img, voxel_size):
+
+    """
+    Generates a height map from an image.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        The image as a numpy array.
+    voxel_size : tuple
+        The voxel size of the image. (z, y, x) in mm
+    filename : str
+        The filename of the image.
+
+    Returns
+    -------  
+    height_map : numpy.ndarray
+        The height map as a numpy array.
+    min_thickness : float
+        The minimum thickness of the image.
+    mean_thickness : float
+        The mean thickness of the image.
+    max_thickness : float 
+        The maximum thickness of the image.
+    std_thickness : float
+        The standard deviation of the thickness of the image.
+    surface_coverage_3px : float
+        The surface coverage of the image ignoring the bottom 3 pixels.
+    surface_coverage_5px : float
+        The surface coverage of the image ignoring the bottom 5 pixels.
+    surface_coverage_10px : float
+        The surface coverage of the image ignoring the bottom 10 pixels.
+    Raises
+    ------
+    No Errors   
+    """
     # Change to 32-bit float for calculations
     img = img.astype(np.float32)
     #image_stack=np.flip(image_stack, axis=1)
@@ -297,8 +335,8 @@ def generate_Height_Map(img, voxel_size, filename):
     print(f"Pixel_dim_x = {dx} mm")
     
     resliced_stack = np.transpose(img, (1, 2, 0))
-    filename = str(filename) + "_height_map.tif"
-    tiff.imwrite(filename, resliced_stack.astype(np.float32))
+    #filename = str(filename) + "_height_map.tif"
+    #tiff.imwrite(filename, resliced_stack.astype(np.float32))
     # Flip along the new z-axis to correct orientation
     #resliced_stack = np.flip(resliced_stack, axis=0) 
     slices, h, w = resliced_stack.shape
@@ -311,11 +349,11 @@ def generate_Height_Map(img, voxel_size, filename):
     height_map = height_map * slice_thickness  # Convert index to physical height
 
     # Generate and save Fire-coded height map
-    filename = filename.replace("_height_map.tif", "_fire_map.png")
+    #filename = filename.replace("_height_map.tif", "_fire_map.png")
     plt.imshow(height_map, cmap='inferno')
     plt.axis('off')
     plt.colorbar(label='Height (mm)')
-    plt.savefig(filename, dpi=300, bbox_inches='tight', pad_inches=0)
+    plt.savefig("height_map.tif", dpi=300, bbox_inches='tight', pad_inches=0)
     plt.close()
     
     # Compute thickness statistics
@@ -345,13 +383,8 @@ def generate_Height_Map(img, voxel_size, filename):
         f"Surface Coverage 5px = {surface_coverage_5px:.2f} %",
         f"Surface Coverage 10px = {surface_coverage_10px:.2f} %"
     ]
-    filename = filename.replace("_fire_map.png", "_HM.txt")
     # Print results
     for line in results:
         print(line)
-    
-    # Save results to a text file
-    with open(filename, 'w') as f:
-        f.write("\n".join(results))
     
     return height_map, min_thickness, mean_thickness, max_thickness, std_thickness, surface_coverage_3px, surface_coverage_5px, surface_coverage_10px
