@@ -44,24 +44,24 @@ def read_tiff(file_path):
         raise ValueError(f"Error reading TIFF file: {str(e)}")
 
 
-def find_substratum(img, start_x, y_max, roi_width, scan_height, box_width):
+def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
     """
     Find the substratum in an image.
 
     Parameters
     ----------
     img : numpy.ndarray
-        The image as a numpy array
+        The image as a numpy array.
     start_x : int
-        The x-coordinate of the starting point
+        The x-coordinate of the starting point of the scan (default = 0)
     y_max : int
-        The maximum y-coordinate
+        Maximum y-coordinate of the substratum at the starting point (typically the half of the height of the image)
     roi_width : int
-        The width of the region of interest
+        Width of the region of interest (default = 20)
     scan_height : int
-        The height of the scan area
-    box_width : int
-        The width of the box to scan
+        Height of the scan area (default = 10)
+    step_width : int
+        Width of the scan steps (default = 5)
 
     Returns
     -------
@@ -70,10 +70,7 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, box_width):
 
     Raises
     ------
-    FileNotFoundError
-        If the file does not exist
-    ValueError
-        If the file could not be read as an image
+    No Errors
     """
     img = img[:, ::-1, :]
     slices, h, w = img.shape
@@ -91,7 +88,7 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, box_width):
         memBot1 = memBot
 
         # Process each slice
-        for x in range(start_x, w, box_width):
+        for x in range(start_x, w, step_width):
             memBot = memBot1
             for y in range(memBot - scan_height, memBot + scan_height, 1):
                 # Ensure 'y' is within bounds for the image height
@@ -108,7 +105,7 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, box_width):
                     memBot1 = memBot
             maxSum = 0
             if memBot > 0:
-                img[:memBot, x:x+box_width] = 0  # Set area to black
+                img[:memBot, x:x+step_width] = 0  # Set area to black
         #print(slice_idx)
     img = img[:, ::-1, :]
     return img
