@@ -44,7 +44,7 @@ def read_tiff(file_path):
         raise ValueError(f"Error reading TIFF file: {str(e)}")
 
 
-def find_substratum (img, start_x, y_max, roi_width, scan_height, box_width):
+def find_substratum(img, start_x, y_max, roi_width, scan_height, box_width):
     """
     Find the substratum in an image.
 
@@ -88,9 +88,9 @@ def find_substratum (img, start_x, y_max, roi_width, scan_height, box_width):
             if sum_val > maxSum:
                 maxSum = sum_val
                 memBot = i
-            memBot1 = memBot
+        memBot1 = memBot
 
-    # Process each slice
+        # Process each slice
         for x in range(start_x, w, box_width):
             memBot = memBot1
             for y in range(memBot - scan_height, memBot + scan_height, 1):
