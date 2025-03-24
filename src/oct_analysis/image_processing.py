@@ -44,7 +44,10 @@ def read_tiff(file_path):
         raise ValueError(f"Error reading TIFF file: {str(e)}")
 
 
+# Pre-Processing functions
+
 def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
+
     """
     Find the substratum in an image.
 
@@ -109,3 +112,37 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
         #print(slice_idx)
     img = img[:, ::-1, :]
     return img
+
+
+# Post-Processing functions
+def voxel_count(img, voxel_size):
+
+    """
+    Counts the number of white pixels in the image and calculates the volume.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        The image as a numpy array.
+    voxel_size : tuple
+        The voxel size of the image. (z, y, x) in mm
+
+    Returns
+    -------
+    volume : float
+        The volume of the image in mm³
+    """
+
+    no_of_white_pixels = np.sum(img == 255)
+    volume = no_of_white_pixels * voxel_size[0] * voxel_size[1] * voxel_size[2]
+    
+    # Prepare result string
+    result_text = (
+        f"Volume = {volume} mm³\n"
+        f"Pixel_dim_z = {voxel_size[0]} mm\n"
+        f"Pixel_dim_y = {voxel_size[1]} mm\n"
+        f"Pixel_dim_x = {voxel_size[2]} mm\n"
+    )
+
+    print(result_text)  # Print results to console
+    return volume
