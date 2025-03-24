@@ -25,7 +25,6 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
-    "sphinx.ext.autosummary",
 ]
 
 templates_path = ["_templates"]
@@ -44,4 +43,3 @@ napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 autodoc_typehints = "description"
 autoclass_content = "both"
-autosummary_generate = True

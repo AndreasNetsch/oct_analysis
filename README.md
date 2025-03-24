@@ -30,7 +30,7 @@ print(f"Image shape: {image.shape}")
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/oct_analysis.git
+git clone https://github.com/AndreasNetsch/oct_analysis.git
 cd oct_analysis
 ```
 

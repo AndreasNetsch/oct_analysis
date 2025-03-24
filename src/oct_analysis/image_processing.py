@@ -9,10 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import customtkinter as ctk
 
-
-
-
-
 def read_tiff(file_path):
     """
     Read an image from a TIFF file.
