@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 from pathlib import Path
-from oct_analysis import __version__
+from src.oct_analysis import __version__
 
 # Read the long description from README.md
 this_directory = Path(__file__).parent
