@@ -12,12 +12,11 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-from src.oct_analysis import __version__
 
 project = "oct_analysis"
 copyright = "2025, Andreas Netsch"
 author = "Andreas Netsch"
-release = __version__
+release = "0.1.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

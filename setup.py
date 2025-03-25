@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 from pathlib import Path
-from src.oct_analysis import __version__
 
 # Read the long description from README.md
 this_directory = Path(__file__).parent
@@ -8,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="oct_analysis",
-    version=__version__,
+    version="0.1.1",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=["numpy", "opencv-python"],
