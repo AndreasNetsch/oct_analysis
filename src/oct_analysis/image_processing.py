@@ -11,7 +11,7 @@ import customtkinter as ctk
 
 def read_tiff(file_path):
     """
-    Read an image from a TIFF file.
+    Read a 3D TIFF stack and its metadata.
 
     Parameters
     ----------
@@ -20,8 +20,11 @@ def read_tiff(file_path):
 
     Returns
     -------
-    numpy.ndarray
-        The image as a numpy array
+    tuple
+        A tuple containing:
+        - numpy.ndarray: The 3D image stack as a numpy array
+        - str: The filename without extension
+        - dict: The metadata from the TIFF file
 
     Raises
     ------
@@ -35,15 +38,93 @@ def read_tiff(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
     try:
-        # Use OpenCV to read the TIFF file
-        img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
+        # Extract filename without extension
+        filename = os.path.splitext(os.path.basename(file_path))[0]
 
-        if img is None:
+        # Use tifffile to read the TIFF stack and metadata
+        with tiff.TiffFile(file_path) as tif:
+            # Read the image stack
+            img_stack = tif.asarray()
+            Z, Y, X = img_stack.shape
+            # Resolution (usually in (numerator, denominator) format)
+            xres = tif.pages[0].tags['XResolution'].value
+            yres = tif.pages[0].tags['YResolution'].value
+
+            x_resolution = round(1000/(xres[0] / xres[1]),3) #µm per px
+            y_resolution = round(1000/(yres[0] / yres[1]),3) #µm per px
+            
+            metadata = {
+                'Z': Z,
+                'Y': Y,
+                'X': X,
+                'shape': img_stack.shape,
+                'dtype': str(img_stack.dtype),
+                'axes': tif.series[0].axes if tif.series else None,
+                'XResolution': x_resolution,
+                'YResolution': y_resolution,
+            }
+
+        if img_stack is None:
             raise ValueError(f"Failed to read image from {file_path}")
 
-        return img
+        return img_stack, filename, metadata
     except Exception as e:
         raise ValueError(f"Error reading TIFF file: {str(e)}")
+
+def save_tiff(img, file_path, filename, metadata=None):
+    """
+    Save a 3D numpy array as a TIFF file with metadata.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        The 3D image stack to save (slices, height, width)
+    file_path : str
+        Path where to save the TIFF file
+    metadata : dict, optional
+        Dictionary containing metadata to save with the image.
+        Common keys include:
+        - 'shape': tuple, shape of the image
+        - 'dtype': str, data type of the image
+        - 'axes': str, axes order (e.g., 'ZYX')
+        - 'resolution': tuple, (x_resolution, y_resolution) µm per pixel
+        - 'resolutionunit': str, unit of resolution (e.g., 'um')
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If the input is not a 3D array or if saving fails
+    """
+    if len(img.shape) != 3:
+        raise ValueError("Input must be a 3D array (slices, height, width)")
+
+    try:
+        # Prepare metadata
+        if metadata is None:
+            metadata = {}
+        
+        # Add basic metadata if not present
+        if 'shape' not in metadata:
+            metadata['shape'] = img.shape
+        if 'dtype' not in metadata:
+            metadata['dtype'] = str(img.dtype)
+        if 'axes' not in metadata:
+            metadata['axes'] = 'ZYX'  # Default axes order for 3D stack
+        # Save the image with metadata
+        save_path = os.path.join(file_path, f"{filename}.tif")
+        with tiff.TiffWriter(save_path) as tif:
+            tif.write(
+                img,
+                metadata=metadata,
+                #resolution=metadata.get('resolution', ('X_Resolution', 'Y_Resolution')),
+            )
+
+    except Exception as e:
+        raise ValueError(f"Error saving TIFF file: {str(e)}")
 
 def select_tiff_folder():
     """
@@ -90,12 +171,12 @@ def convert_to_8bit(img):
 def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
 
     """
-    Find the substratum in an image.
+    Find the substratum in a 3D image stack.
 
     Parameters
     ----------
     img : numpy.ndarray
-        The image as a numpy array.
+        The 3D image stack as a numpy array (slices, height, width)
     start_x : int
         The x-coordinate of the starting point of the scan (default = 0)
     y_max : int
@@ -116,15 +197,21 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
     ------
     No Errors
     """
+    # Ensure we're working with a 3D stack
+    if len(img.shape) != 3:
+        raise ValueError("Input image must be a 3D stack (slices, height, width)")
+
+    # Flip the stack horizontally
     img = img[:, ::-1, :]
     slices, h, w = img.shape
     
-    for slice_idx, img in enumerate(img):
+    # Process each slice
+    for slice_idx in range(slices):
         maxSum = 0
         memBot = 0
         # Find the bottom of the membrane in the first slice
         for i in range(y_max):
-            roi = img[i, start_x:start_x+roi_width]
+            roi = img[slice_idx, i, start_x:start_x+roi_width]
             sum_val = np.mean(roi)
             if sum_val > maxSum:
                 maxSum = sum_val
@@ -138,9 +225,9 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
                 # Ensure 'y' is within bounds for the image height
                 if y < 0:
                     y = 0
-                elif y >= img.shape[0]:  # img.shape[0] is the height of the image
-                    y = img.shape[0] - 1
-                roi = img[y, x:x+roi_width]
+                elif y >= h:
+                    y = h - 1
+                roi = img[slice_idx, y, x:x+roi_width]
                 sum_val = np.mean(roi)
                 if sum_val > maxSum:
                     maxSum = sum_val
@@ -149,8 +236,9 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
                     memBot1 = memBot
             maxSum = 0
             if memBot > 0:
-                img[:memBot, x:x+step_width] = 0  # Set area to black
-        #print(slice_idx)
+                img[slice_idx, :memBot, x:x+step_width] = 0  # Set area to black
+    
+    # Flip the stack back
     img = img[:, ::-1, :]
     return img
 
@@ -384,3 +472,5 @@ def generate_Height_Map(img, voxel_size):
         print(line)
     
     return height_map, min_thickness, mean_thickness, max_thickness, std_thickness, surface_coverage_3px, surface_coverage_5px, surface_coverage_10px
+
+
