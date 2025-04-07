@@ -22,7 +22,7 @@ def test_read_tiff_returns_numpy_array():
     fake_image = np.zeros((100, 100, 3), dtype=np.uint8)
 
     with mock.patch("os.path.isfile", return_value=True):
-        with mock.patch("cv2.imread", return_value=fake_image):
+        with mock.patch("tifffile.imread", return_value=fake_image):
             image = read_tiff("fake_file.tiff")
             assert isinstance(image, np.ndarray)
             assert image.shape == (100, 100, 3)
@@ -31,6 +31,6 @@ def test_read_tiff_returns_numpy_array():
 def test_read_tiff_error_on_none_image():
     """Test that ValueError is raised when cv2.imread returns None"""
     with mock.patch("os.path.isfile", return_value=True):
-        with mock.patch("cv2.imread", return_value=None):
+        with mock.patch("tifffile.imread", return_value=None):
             with pytest.raises(ValueError):
                 read_tiff("invalid_image.tiff")
