@@ -8,6 +8,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import customtkinter as ctk
+from skimage import io, exposure, filters, morphology 
 
 def read_tiff(file_path):
     """
@@ -43,27 +44,31 @@ def read_tiff(file_path):
 
         # Use tifffile to read the TIFF stack and metadata
         with tiff.TiffFile(file_path) as tif:
+            page = tif.pages[0]  # Read the first page
+            description = page.tags.get('ImageDescription') # type: ignore
+            imagej_metadata = {}
+
+            if description:
+                desc = description.value
+            for line in desc.split('\n'):
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    imagej_metadata[key] = value
             # Read the image stack
             img_stack = tif.asarray()
-            Z, Y, X = img_stack.shape
-            # Resolution (usually in (numerator, denominator) format)
-            xres = tif.pages[0].tags['XResolution'].value
-            yres = tif.pages[0].tags['YResolution'].value
-
-            x_resolution = round(1000/(xres[0] / xres[1]),3) #µm per px
-            y_resolution = round(1000/(yres[0] / yres[1]),3) #µm per px
-            
             metadata = {
-                'Z': Z,
-                'Y': Y,
-                'X': X,
-                'shape': img_stack.shape,
-                'dtype': str(img_stack.dtype),
-                'axes': tif.series[0].axes if tif.series else None,
-                'XResolution': x_resolution,
-                'YResolution': y_resolution,
-            }
-
+            'Z': int(imagej_metadata.get('slices', 1)),
+            'Y': page.tags['ImageLength'].value, # type: ignore
+            'X': page.tags['ImageWidth'].value, # type: ignore
+            'shape': tif.series[0].shape,
+            'dtype': str(tif.series[0].dtype),
+            'axes': tif.series[0].axes,
+            'XResolution': page.tags['XResolution'].value, # type: ignore
+            'YResolution': page.tags['YResolution'].value, # type: ignore
+            'unit': imagej_metadata.get('unit', None),
+            'spacing': float(imagej_metadata.get('spacing', 1.0)),
+        }
+        print(metadata)
         if img_stack is None:
             raise ValueError(f"Failed to read image from {file_path}")
 
@@ -334,6 +339,39 @@ def untilt(img, thres, y_offset, top_crop):
     img = img[:, ::-1, :]
     img = find_max_zero(img, top_crop)
     img = img[:, ::-1, :]
+    return img
+
+def binary_mask(img, thresholding_method, contrast, blurred, blur_size, outliers_size):
+    processed_frames = []
+    for i, image in enumerate(img):
+        if blurred == True:
+            # Apply Gaussian blur before contrast enhancement
+            image_blurred = cv2.GaussianBlur(image, (blur_size,blur_size), 0)  # Kernel size (5,5), has to be positive and odd
+        else:
+            image_blurred = image
+        
+        # Enhance contrast
+        p2, p98 = np.percentile(image_blurred, (contrast, 100-contrast))  
+        image_contrast = exposure.rescale_intensity(image_blurred, in_range=str(p2, p98))
+
+        if thresholding_method == 'yen':
+            # Apply Yen's thresholding method
+            yen_threshold = filters.threshold_yen(image_contrast)
+            image_thresholded = image_contrast > yen_threshold
+        elif thresholding_method == 'otsu':
+            # Apply Otsu's thresholding method
+            otsu_threshold = filters.threshold_otsu(image_contrast)
+            image_thresholded = image_contrast > otsu_threshold
+
+        # Remove small bright objects
+        image_no_outliers = morphology.remove_small_objects(image_thresholded, min_size=outliers_size, connectivity=1)
+
+        # Append processed frame to the list
+        processed_frames.append(image_no_outliers.astype(np.uint8) * 255)
+
+    # Convert list to 3D numpy array (num_frames, height, width)
+    img = np.stack(processed_frames, axis=0)
+    print("Processed frames shape:", img.shape)
     return img
 
 # Post-Processing functions
