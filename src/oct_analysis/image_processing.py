@@ -5,6 +5,7 @@ Image processing functions for oct_analysis
 import cv2
 import tifffile as tiff
 import os
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import customtkinter as ctk
@@ -147,6 +148,45 @@ def select_tiff_folder():
     else:
         print("No folder selected.")
     return folder_path
+
+def save_results_to_csv(output_folder, headers, data):
+    """
+    Save calculated results to a CSV file.
+
+    Parameters
+    ----------
+    output_folder : str
+        The folder where the CSV file will be saved.
+    filename : str
+        The name of the file being processed (used as the first column in the CSV).
+    headers : list
+        A list of column headers for the CSV file.
+    data : list
+        A list of calculated values to save in the CSV.
+
+    Returns
+    -------
+    None
+    """
+    # Ensure the output folder exists
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Define the output CSV file path
+    csv_file_path = os.path.join(output_folder, "results.csv")
+
+    # Check if the file already exists to determine if headers need to be written
+    file_exists = os.path.isfile(csv_file_path)
+
+    # Open the CSV file in append mode
+    with open(csv_file_path, mode='a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+
+        # Write the header if the file is being created for the first time
+        if not file_exists:
+            writer.writerow(headers)
+
+        # Write the data row
+        writer.writerow(data)
 
 # Pre-Processing functions
 def convert_to_8bit(img):
@@ -450,7 +490,7 @@ def generate_Height_Map(img, voxel_size, filename, output_folder, vmin, vmax):
     img /= 255.0
     
     # Get voxel size (assuming isotropic pixels in X and Y, different Z)
-    slice_thickness, dy, dx = voxel_size  # Adjust if metadata is available
+    dy, slice_thickness, dx = voxel_size  # Adjust if metadata is available
     print(f"Slice Thickness = {slice_thickness} mm")
     print(f"Pixel_dim_y = {dy} mm")
     print(f"Pixel_dim_x = {dx} mm")
@@ -496,7 +536,7 @@ def generate_Height_Map(img, voxel_size, filename, output_folder, vmin, vmax):
     # Compute surface coverage using histogram method
     histogram, _ = np.histogram(height_map, bins=256, range=(0, np.max(height_map)))
     n_pixels = height_map.size
-    substratum_coverage = (1 - np.sum(histogram[:4]) / n_pixels) * 100
+    substratum_coverage = (1 - np.sum(histogram[:3]) / n_pixels) * 100
 
     
     # Prepare results
@@ -515,7 +555,6 @@ def generate_Height_Map(img, voxel_size, filename, output_folder, vmin, vmax):
         print(line)
     
     return height_map, min_thickness, mean_thickness, max_thickness, std_thickness, substratum_coverage
-
 
 def generate_B_Map(img, voxel_size, filename, output_folder, vmin, vmax):
 
@@ -561,7 +600,7 @@ def generate_B_Map(img, voxel_size, filename, output_folder, vmin, vmax):
     img /= 255.0
     
     # Get voxel size (assuming isotropic pixels in X and Y, different Z)
-    slice_thickness, dy, dx = voxel_size  # Adjust if metadata is available
+    dy, slice_thickness, dx = voxel_size  # Adjust if metadata is available
     print(f"Slice Thickness = {slice_thickness} mm")
     print(f"Pixel_dim_y = {dy} mm")
     print(f"Pixel_dim_x = {dx} mm")
@@ -622,3 +661,127 @@ def generate_B_Map(img, voxel_size, filename, output_folder, vmin, vmax):
         print(line)
     
     return B_map, min_thickness_B_map, mean_thickness_B_map, max_thickness_B_map, std_thickness_B_map, substratum_coverage_B_map
+
+def calculate_roughness(img, voxel_size, threshold=0):
+    """
+    Calculate roughness metrics across all slices.
+
+    Parameters:
+    - img_stack : 3D numpy array (slices, height, width)
+    - threshold : Intensity threshold
+
+    Returns:
+    - mean_thickness : float
+    - mean_arithmetic_roughness (Ra) : float
+    - mean_rms_roughness (Rq) : float
+    - std_rms_roughness (Rq) : float
+    - mean_roughness_coeff (Ra / mean_thickness) : float
+    - std_roughness_coeff (Ra / mean_thickness) : float
+    """
+    import numpy as np
+
+    slices, height, width = img.shape
+    dy, slice_thickness, dx = voxel_size  # Adjust if metadata is available
+
+    mean_thickness_list = []
+    arithmetic_roughness_list = []
+    rms_roughness_list = []
+    roughness_coeff_list = []
+
+    for k in range(slices):
+        slice_img = img[k]
+        surface_heights = []
+
+        for i in range(width):
+            column = slice_img[:, i]
+            above_threshold = np.where(column > threshold)[0]
+
+            if len(above_threshold) > 0:
+                biofilm_down = height-above_threshold[0]
+            else:
+                biofilm_down = 0  # No biofilm found
+
+            surface_heights.append(biofilm_down)
+
+        surface_heights = np.array(surface_heights)*slice_thickness
+
+        mean_thickness = np.mean(surface_heights)
+        arithmetic_roughness = np.mean(np.abs(surface_heights - mean_thickness))  # Ra
+        rms_roughness = np.std(surface_heights)  # Rq
+        roughness_coeff = arithmetic_roughness / mean_thickness if mean_thickness > 0 else 0
+
+        mean_thickness_list.append(mean_thickness)
+        arithmetic_roughness_list.append(arithmetic_roughness)
+        rms_roughness_list.append(rms_roughness)
+        roughness_coeff_list.append(roughness_coeff)
+
+    # Global metrics across slices
+    mean_thickness = np.mean(mean_thickness_list)
+    mean_arithmetic_roughness = np.mean(arithmetic_roughness_list)
+    std_arithmetric_roughness = np.std(arithmetic_roughness_list)
+    mean_rms_roughness = np.mean(rms_roughness_list)
+    std_rms_roughness = np.std(rms_roughness_list)
+    mean_roughness_coeff = np.mean(roughness_coeff_list)
+    std_roughness_coeff = np.std(roughness_coeff_list)
+
+    print(f"Mean Thickness = {mean_thickness:.3f} mm")
+    print(f"Mean Arithmetic Roughness (Ra) = {mean_arithmetic_roughness:.3f} mm")
+    print(f"Mean RMS Roughness (Rq) = {mean_rms_roughness:.3f} mm")
+    print(f"Mean Roughness Coefficient = {mean_roughness_coeff:.3f}")
+    print(f"Std Roughness Coefficient = {std_roughness_coeff:.3f}")
+    print(f"Std Arithmetic Roughness (Ra) = {std_arithmetric_roughness:.3f} mm")
+    print(f"Std RMS Roughness (Rq) = {std_rms_roughness:.3f} mm")
+
+
+    return (mean_arithmetic_roughness,
+            std_arithmetric_roughness, 
+            mean_rms_roughness, 
+            std_rms_roughness, 
+            mean_roughness_coeff, 
+            std_roughness_coeff)
+
+def calculate_porosity(img, threshold=0):
+    """
+    Calculate porosity per slice and return mean and std over all slices.
+
+    Parameters:
+    - img_stack : 3D numpy array (slices, height, width)
+    - threshold : Intensity threshold
+
+    Returns:
+    - mean_porosity : float
+    - std_porosity : float
+    """
+    import numpy as np
+
+    slices, height, width = img.shape
+    porosity_list = []
+
+    for k in range(slices):
+        slice_img = img[k]
+        total_void_voxels = 0
+        total_surface_voxels = 0
+
+        for i in range(width):
+            column = slice_img[:, i]
+            above_threshold = np.where(column > threshold)[0]
+
+            if len(above_threshold) > 0:
+                surface_pos = above_threshold[0]
+            else:
+                surface_pos = height  # No biofilm found → whole column is considered
+
+            void_voxels = np.sum(column[surface_pos:height] <= threshold)
+            total_void_voxels += void_voxels
+            total_surface_voxels += height-surface_pos
+
+        porosity = total_void_voxels / total_surface_voxels if total_surface_voxels > 0 else 0
+        porosity_list.append(porosity)
+
+    mean_porosity = np.mean(porosity_list)*100 # Convert to percentage
+    std_porosity = np.std(porosity_list)*100 # Convert to percentage
+
+    print(f"Mean Porosity = {mean_porosity:.3f} %")
+    print(f"Std Porosity = {std_porosity:.3f} %")
+
+    return mean_porosity, std_porosity
