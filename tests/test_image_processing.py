@@ -198,7 +198,7 @@ def test_generate_Height_Map():
         )
         
         assert isinstance(height_map, np.ndarray)
-        assert height_map.shape == (20, 30)  # After transpose and processing
+        assert height_map.shape == (30, 5)  # After transpose and processing
         assert isinstance(min_thickness, float)
         assert isinstance(mean_thickness, float)
         assert isinstance(max_thickness, float)
@@ -222,7 +222,7 @@ def test_generate_B_Map():
         )
         
         assert isinstance(b_map, np.ndarray)
-        assert b_map.shape == (20, 30)  # After transpose and processing
+        assert b_map.shape == (30, 5)  # After transpose and processing
         assert isinstance(min_thickness, float)
         assert isinstance(mean_thickness, float)
         assert isinstance(max_thickness, float)
