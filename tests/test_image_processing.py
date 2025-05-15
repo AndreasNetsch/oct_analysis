@@ -164,7 +164,7 @@ def test_untilt():
     """Test untilting of image stack"""
     # Create a test image with a tilted pattern
     test_img = np.zeros((5, 20, 30), dtype=np.uint8)
-    for i in range(30):
+    for i in range(min(20, 30)):  # Ensure i does not exceed the bounds
         test_img[:, i, i:i+5] = 255  # Create a diagonal pattern
     
     result = untilt(test_img, thres=1, y_offset=2, top_crop=1)
@@ -198,12 +198,16 @@ def test_generate_Height_Map():
         )
         
         assert isinstance(height_map, np.ndarray)
-        assert height_map.shape == (20, 30)
+        assert height_map.shape == (20, 30)  # After transpose and processing
         assert isinstance(min_thickness, float)
         assert isinstance(mean_thickness, float)
         assert isinstance(max_thickness, float)
         assert isinstance(std_thickness, float)
         assert isinstance(coverage, float)
+        
+        # Verify the output files were created
+        assert os.path.exists(os.path.join(temp_dir, "test_HM.tiff"))
+        assert os.path.exists(os.path.join(temp_dir, "test_HM.png"))
 
 
 def test_generate_B_Map():
@@ -218,12 +222,16 @@ def test_generate_B_Map():
         )
         
         assert isinstance(b_map, np.ndarray)
-        assert b_map.shape == (20, 30)
+        assert b_map.shape == (20, 30)  # After transpose and processing
         assert isinstance(min_thickness, float)
         assert isinstance(mean_thickness, float)
         assert isinstance(max_thickness, float)
         assert isinstance(std_thickness, float)
         assert isinstance(coverage, float)
+        
+        # Verify the output files were created
+        assert os.path.exists(os.path.join(temp_dir, "test_BM.tiff"))
+        assert os.path.exists(os.path.join(temp_dir, "test_BM.png"))
 
 
 def test_calculate_roughness():
