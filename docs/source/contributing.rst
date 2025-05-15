@@ -28,7 +28,7 @@ Development Setup
        pre-commit install
 
 Code Style
----------
+----------
 
 This project uses:
 

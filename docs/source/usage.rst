@@ -17,7 +17,7 @@ To read a TIFF image using **oct_analysis**, you can use the ``read_tiff`` funct
     print(f"Image shape: {image.shape}")
 
 Finding Substratum in Images
---------------------------
+---------------------------
 
 To find and process the substratum in an image, you can use the ``find_substratum`` function:
 

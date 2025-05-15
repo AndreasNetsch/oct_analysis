@@ -13,6 +13,7 @@ setup(
     install_requires=[
         "numpy",
         "opencv-python",
+        "scikit-image",
         "sphinx>=4.0.0",
         "sphinx_rtd_theme>=0.5.2",
         "sphinx-autodoc-typehints>=1.12.0",
