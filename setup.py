@@ -10,7 +10,13 @@ setup(
     version="0.1.1",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    install_requires=["numpy", "opencv-python"],
+    install_requires=[
+        "numpy",
+        "opencv-python",
+        "sphinx>=4.0.0",
+        "sphinx_rtd_theme>=0.5.2",
+        "sphinx-autodoc-typehints>=1.12.0",
+    ],
     extras_require={
         "dev": [
             "pytest>=6.0.0",
