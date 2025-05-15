@@ -9,7 +9,7 @@ setup(
     name="oct_analysis",
     version="0.1.1",
     package_dir={"": "src"},
-    packages=find_packages(where="src"),
+    packages=find_packages(where="src", include=["oct_analysis", "oct_analysis.*"]),
     install_requires=[
         "numpy",
         "opencv-python",

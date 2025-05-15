@@ -8,3 +8,4 @@ tifffile>=2020.6.3
 pytest>=6.0.0
 flake8>=4.0.0
 customtkinter>=5.2.0
+-e .
