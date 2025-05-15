@@ -61,7 +61,7 @@ def test_read_tiff_returns_expected_outputs():
             assert metadata['Y'] == 20
             assert metadata['X'] == 30
             assert metadata['shape'] == (10, 20, 30)
-            assert metadata['dtype'] == np.uint8.__name__
+            assert metadata['dtype'] == 'uint8'
             assert metadata['axes'] == 'ZYX'
             assert metadata['XResolution'] == (1, 1)
             assert metadata['YResolution'] == (1, 1)
