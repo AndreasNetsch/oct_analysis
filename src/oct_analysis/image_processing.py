@@ -286,6 +286,86 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
     img = img[:, ::-1, :]
     return img
 
+def find_line(img, x1=0, x2=None, thres_line=1):
+    """
+    Find a line between two points in an image and draw it on the image stack.
+    This is a Python implementation of the line finding part from the ImageJ macro '2PointsLine.ijm'.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        The 3D image stack as a numpy array (slices, height, width)
+    x1 : int, optional
+        X-coordinate of the first point (default=0)
+    x2 : int, optional
+        X-coordinate of the second point. If None, uses image width - 1 (default=None)
+    thres_line : int, optional
+        Threshold for line detection (default=1)
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - numpy.ndarray: The image stack with lines drawn
+        - list: List of (x1, y1, x2, y2) coordinates for each slice
+    """
+    if len(img.shape) != 3:
+        raise ValueError("Input image must be a 3D stack (slices, height, width)")
+
+    slices, height, width = img.shape
+    if x2 is None:
+        x2 = width - 1
+
+    # Create a copy of the input image to draw lines on
+    img_with_lines = img.copy()
+    line_coords = []
+
+    def find_y_coordinate(slice_img, x):
+        """Find the y-coordinate where the intensity exceeds threshold."""
+        profile = slice_img[:, x]
+        for y in range(len(profile)-1, -1, -1):
+            if profile[y] >= thres_line:
+                return y
+        return 0
+
+    def draw_line(slice_img, x1, y1, x2, y2):
+        """Draw a line on the image using Bresenham's line algorithm."""
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        sx = 1 if x1 < x2 else -1
+        sy = 1 if y1 < y2 else -1
+        err = dx - dy
+
+        while True:
+            # Set the pixel to white (255)
+            slice_img[y1, x1] = 255
+
+            if x1 == x2 and y1 == y2:
+                break
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x1 += sx
+            if e2 < dx:
+                err += dx
+                y1 += sy
+
+    # Process each slice
+    for s in range(slices):
+        current_slice = img_with_lines[s]
+        
+        # Find y-coordinates for both points
+        y1 = find_y_coordinate(current_slice, x1)
+        y2 = find_y_coordinate(current_slice, x2)
+        
+        # Store line coordinates
+        line_coords.append((x1, y1, x2, y2))
+        
+        # Draw the line on the current slice
+        draw_line(current_slice, x1, y1, x2, y2)
+
+    return img_with_lines, line_coords
+
 def find_max_zero (img, top_crop):
 
     """
@@ -381,6 +461,43 @@ def untilt(img, thres, y_offset, top_crop):
     return img
 
 def binary_mask(img, thresholding_method, contrast, blurred, blur_size, outliers_size):
+    """
+    Create a binary mask from an image stack using various preprocessing steps.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        The 3D image stack as a numpy array (slices, height, width)
+    thresholding_method : str
+        The method to use for thresholding. Options are:
+        - 'yen': Yen's thresholding method
+        - 'otsu': Otsu's thresholding method
+    contrast : float
+        The contrast enhancement percentile. Values between 0 and 100.
+        For example, if contrast=2, the intensity range will be stretched
+        between the 2nd and 98th percentiles.
+    blurred : bool
+        Whether to apply Gaussian blur before thresholding
+    blur_size : int
+        Size of the Gaussian blur kernel. Must be positive and odd.
+    outliers_size : int
+        Minimum size of objects to keep after thresholding.
+        Objects smaller than this size will be removed.
+
+    Returns
+    -------
+    numpy.ndarray
+        The processed binary mask as a 3D numpy array (slices, height, width)
+        with values 0 (black) and 255 (white)
+
+    Notes
+    -----
+    The function performs the following steps:
+    1. Optional Gaussian blur for noise reduction
+    2. Contrast enhancement using percentile-based stretching
+    3. Thresholding using either Yen's or Otsu's method
+    4. Removal of small objects (outliers)
+    """
     processed_frames = []
     for i, image in enumerate(img):
         if blurred == True:
@@ -410,7 +527,6 @@ def binary_mask(img, thresholding_method, contrast, blurred, blur_size, outliers
 
     # Convert list to 3D numpy array (num_frames, height, width)
     img = np.stack(processed_frames, axis=0)
-    #print("Processed frames shape:", img.shape)
     return img
 
 # Post-Processing functions
@@ -667,10 +783,12 @@ def calculate_roughness(img, voxel_size, threshold=0):
     Calculate roughness metrics across all slices.
 
     Parameters:
+    ----------
     - img_stack : 3D numpy array (slices, height, width)
     - threshold : Intensity threshold
 
     Returns:
+    ----------
     - mean_thickness : float
     - mean_arithmetic_roughness (Ra) : float
     - mean_rms_roughness (Rq) : float
@@ -745,10 +863,12 @@ def calculate_porosity(img, threshold=0):
     Calculate porosity per slice and return mean and std over all slices.
 
     Parameters:
+    ----------
     - img_stack : 3D numpy array (slices, height, width)
     - threshold : Intensity threshold
 
     Returns:
+    ----------
     - mean_porosity : float
     - std_porosity : float
     """
@@ -785,3 +905,4 @@ def calculate_porosity(img, threshold=0):
     print(f"Std Porosity = {std_porosity:.3f} %")
 
     return mean_porosity, std_porosity
+
