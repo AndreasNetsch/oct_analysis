@@ -1,6 +1,6 @@
 # oct_analysis
 
-A library for image processing functions.
+oct_analysis is a Python library for the processing of image data for optical methods (foremost optical coherence tomography (OCT)).
 
 ## Installation
 
@@ -10,20 +10,31 @@ pip install oct_analysis
 
 ## Features
 
-- Read TIFF image files
+The oct_analysis python package includes various functions for:
+
+- Unpacking *.oct files and loading tiff files as numpy array
+- Preprocessing functions to identify and remove objects/boundaries
+- Image segmentation and binarization
+- Post-processing funtions for the calcuation and saving of structural parameters from the imaging stacks
 
 ## Usage
+The documentation can be found in https://oct-analysis.readthedocs.io/en/latest/index.html
+
+Examples for the usage of the functions are described in oct_analysis/examples
 
 ```python
-import numpy as np
-from oct_analysis import read_tiff
+from oct_analysis import (
+    read_tiff,
+    select_tiff_folder,
+    convert_to_8bit,
+    find_substratum,
+    voxel_count,
+    find_max_zero,
+    untilt,
+    generate_Height_Map
+)
 
-# Read a TIFF image
-image = read_tiff('path/to/your/image.tiff')
-print(f"Image shape: {image.shape}")
-```
-
-## Development
+## Collaboration and Development
 
 ### Setup
 
