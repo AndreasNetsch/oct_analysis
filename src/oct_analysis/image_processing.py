@@ -286,7 +286,7 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
     img = img[:, ::-1, :]
     return img
 
-def find_line(img, x1=0, x2=None, thres_line=1):
+def find_two_point_line(img, x1=0, x2=None, thres_line=1):
     """
     Find a line between two points in an image and draw it on the image stack.
     This is a Python implementation of the line finding part from the ImageJ macro '2PointsLine.ijm'.
@@ -784,17 +784,17 @@ def calculate_roughness(img, voxel_size, threshold=0):
 
     Parameters:
     ----------
-    - img_stack : 3D numpy array (slices, height, width)
-    - threshold : Intensity threshold
+    img_stack : 3D numpy array (slices, height, width)
+    threshold : Intensity threshold
 
     Returns:
     ----------
-    - mean_thickness : float
-    - mean_arithmetic_roughness (Ra) : float
-    - mean_rms_roughness (Rq) : float
-    - std_rms_roughness (Rq) : float
-    - mean_roughness_coeff (Ra / mean_thickness) : float
-    - std_roughness_coeff (Ra / mean_thickness) : float
+    mean_thickness : float
+    mean_arithmetic_roughness (Ra) : float
+    mean_rms_roughness (Rq) : float
+    std_rms_roughness (Rq) : float
+    mean_roughness_coeff (Ra / mean_thickness) : float
+    std_roughness_coeff (Ra / mean_thickness) : float
     """
     import numpy as np
 
@@ -864,13 +864,13 @@ def calculate_porosity(img, threshold=0):
 
     Parameters:
     ----------
-    - img_stack : 3D numpy array (slices, height, width)
-    - threshold : Intensity threshold
+    img_stack : 3D numpy array (slices, height, width)
+    threshold : Intensity threshold
 
     Returns:
     ----------
-    - mean_porosity : float
-    - std_porosity : float
+    mean_porosity : float
+    std_porosity : float
     """
     import numpy as np
 
