@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Version 1.0.0 (2024-05-20)
+Version 1.0.1 (2024-05-20)
 -------------------------
 
 * Major release with complete feature set
