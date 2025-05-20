@@ -1,4 +1,4 @@
-Usage
+Examples
 =====
 
 Reading TIFF Images

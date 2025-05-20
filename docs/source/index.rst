@@ -13,7 +13,7 @@ Welcome to oct_analysis's documentation!
    :caption: Contents:
 
    installation
-   usage
+   Examples
    api
    contributing
    changelog
