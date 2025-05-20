@@ -52,9 +52,9 @@ for input_filename in tiff_files:
 
     # Create a binary mask of the image
     img_binary_raw = oct.binary_mask(img, thresholding_method='otsu', contrast=0.35, blurred=True, blur_size=1, outliers_size=1)
-    #img_binary_blurred = oct.binary_mask(img, thresholding_method='otsu', contrast=1, blurred=True, blur_size=3, outliers_size=3)
-    #img_binary_difference = np.clip(img_binary_blurred.astype(np.int16) - img_binary_raw.astype(np.int16), 0, 255).astype(np.uint8)
-    #img_binary = np.clip(img_binary_blurred.astype(np.int16) - img_binary_difference.astype(np.int16), 0, 255).astype(np.uint8)
+    img_binary_blurred = oct.binary_mask(img, thresholding_method='otsu', contrast=1, blurred=True, blur_size=3, outliers_size=3)
+    img_binary_difference = np.clip(img_binary_blurred.astype(np.int16) - img_binary_raw.astype(np.int16), 0, 255).astype(np.uint8)
+    img_binary = np.clip(img_binary_blurred.astype(np.int16) - img_binary_difference.astype(np.int16), 0, 255).astype(np.uint8)
     
     oct.save_tiff(img_binary_raw, output_folder, f"{filename}_binary", metadata=metadata)
 
