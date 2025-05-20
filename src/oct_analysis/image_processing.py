@@ -760,7 +760,7 @@ def generate_B_Map(img, voxel_size, filename, output_folder, vmin, vmax):
     
     # Generate and save Fire-coded height map
     output_path = os.path.join(output_folder, f"{filename}_BM")
-    fig, ax = plt.subplots(figsize=(fig_height, fig_width))
+    fig, ax = plt.subplots(figsize=(fig_height, ))
     im = ax.imshow(B_map, cmap='inferno', vmin=vmin, vmax=vmax)  # Set min and max range for cmap
     ax.axis('off')
     plt.savefig(f"{output_path}.tiff", dpi=300, bbox_inches='tight', pad_inches=0)
