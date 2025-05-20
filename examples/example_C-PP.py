@@ -33,18 +33,18 @@ headers = [
     "Std Porosity"
 ]
 
-# This example file is for the PVC example image
+# This example file is for the C-PP example image
 
 for input_filename in tiff_files:
     img, filename, metadata = oct.read_tiff(input_filename)
     img = oct.convert_to_8bit(img)
     slices, h, w =img.shape
-    img = oct.untilt(img, thres=200, y_offset=6, top_crop=30) # Remove black area beneath substratum
+    img = oct.untilt(img, thres=195, y_offset=6, top_crop=30) # Remove black area beneath substratum
     oct.save_tiff(img, output_folder, filename, metadata=metadata)
 
     # Create a binary mask of the image
-    img_binary_raw = oct.binary_mask(img, thresholding_method='yen', contrast=0.35, blurred=False, blur_size=0, outliers_size=0)
-    img_binary_blurred = oct.binary_mask(img, thresholding_method='yen', contrast=0.35, blurred=True, blur_size=5, outliers_size=5)
+    img_binary_raw = oct.binary_mask(img, thresholding_method='otsu', contrast=0.35, blurred=False, blur_size=0, outliers_size=0)
+    img_binary_blurred = oct.binary_mask(img, thresholding_method='otsu', contrast=0.35, blurred=True, blur_size=5, outliers_size=5)
     img_binary_difference = np.clip(img_binary_blurred.astype(np.int16) - img_binary_raw.astype(np.int16), 0, 255).astype(np.uint8)
     img_binary = np.clip(img_binary_blurred.astype(np.int16) - img_binary_difference.astype(np.int16), 0, 255).astype(np.uint8)
     
