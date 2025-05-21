@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <title>predictions test</title>
+
+</head>
+
+<body styles="background-color: #000;">
+    <h1 style="color:aqua">Welcome to the prediction test</h1>
+    <p style="color: white;">This is a test to see if the model is working</p>
+
+    <form action="/predict" method="post" enctype="multipart/form-data">
+        <input type="file" name="img" accept="image/*">
+        <input type="submit" value="Upload Image">
+    </form>
+
+    {% if prediction_exists %}
+        <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
+            <div>
+                <h2 style="color: white;">Output plot:</h2>
+                <img src="{{ output_plot }}" alt="Output Plot" style="width: 1000px; height: auto;">
+            </div>
+        </div>
+    {% endif %}
+
+</body>
+</html>
