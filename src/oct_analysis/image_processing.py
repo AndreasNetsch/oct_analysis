@@ -106,6 +106,10 @@ def save_tiff(img, file_path, filename, metadata=None):
     """
     if len(img.shape) != 3:
         raise ValueError("Input must be a 3D array (slices, height, width)")
+    
+    # Check for zero-size array
+    if img.size == 0 or any(dim == 0 for dim in img.shape):
+        raise ValueError("Cannot save zero-size array or array with zero dimensions")
 
     try:
         # Prepare metadata
@@ -366,26 +370,25 @@ def find_two_point_line(img, x1=0, x2=None, thres_line=1):
 
     return img_with_lines, line_coords
 
-def find_max_zero (img, top_crop):
-
+def find_max_zero(img, top_crop):
     """
-    Finds the maximum number of zero pixels in any column and removes the top rows according to the maximum number of zero pixels.
+    Finds the maximum number of consecutive zero pixels from the top in any column
+    and removes that many rows from the top of the image.
 
     Parameters
     ----------
     img : numpy.ndarray
         The image as a numpy array.
     top_crop : int
-        The number of pixels to crop from the top of the image. (default = 0)
+        Additional number of pixels to crop from the top of the image.
 
     Returns
     -------
     numpy.ndarray
-        The image as a numpy array.
+        The image as a numpy array with top zero pixels removed.
     """
-
     slices, h, w = img.shape
-    # Variable to keep track of the maximum number of zero pixels in any column
+    # Variable to keep track of the maximum number of consecutive zero pixels from top
     max_zero_pixels = 0
 
     # Loop through each slice
@@ -396,22 +399,27 @@ def find_max_zero (img, top_crop):
         # Loop through each pixel column (x) in the slice
         for x in range(w):
             profile = slice_img[:, x]
+            
+            # Find the first non-zero pixel
+            non_zero_idx = np.where(profile > 0)[0]
+            if len(non_zero_idx) > 0:
+                # Count consecutive zeros from top until first non-zero
+                zero_count = non_zero_idx[0]
+                max_zero_pixels = max(max_zero_pixels, zero_count)
 
-            # Count the number of zero pixels in the column
-            zero_count = np.sum(profile == 0)
-
-            # Update the maximum zero pixel count if necessary
-            max_zero_pixels = max(max_zero_pixels, zero_count)
-    # Flip the stack vertically
-    img = img[:, ::-1, :]
-    # Remove the top rows according to max_zero_pixels
-    img = img[:, max_zero_pixels+top_crop:, :]
-    # Flip the stack vertically
-    img = img[:, ::-1, :]
+    # Add the additional top_crop to the number of rows to remove
+    rows_to_remove = max_zero_pixels + top_crop
+    
+    # Ensure we don't remove more rows than the image height
+    rows_to_remove = min(rows_to_remove, h-1)
+    
+    # Remove the rows from the top
+    if rows_to_remove > 0:
+        img = img[:, rows_to_remove:, :]
+    
     return img
 
 def untilt(img, thres, y_offset, top_crop):
-
     """
     Finds the substratum in an image and tilts it until the substratum is horizontal.
 
@@ -431,10 +439,9 @@ def untilt(img, thres, y_offset, top_crop):
     numpy.ndarray
         The image as a numpy array.
     """
-
     slices, h, w = img.shape
     img = img[:, ::-1, :]
-    # Create an empty array for the resulting image
+    # Create an empty array for the resulting image with same dimensions
     new_img_array = np.zeros_like(img)
 
     for s in range(slices):
@@ -444,20 +451,31 @@ def untilt(img, thres, y_offset, top_crop):
         # Loop through each pixel column (x) in the slice
         for x in range(w):
             profile = slice_img[:, x]
-        
-            # Extract non-zero pixels from the column
-            non_zero_pixels = profile[profile > 0]
-
-            if len(non_zero_pixels) > thres:
-                # Move non-zero pixels to the top of the column
+            
+            # Find the first pixel that exceeds the threshold
+            first_pixel_idx = np.where(profile > thres)[0]
+            
+            if len(first_pixel_idx) > 0:
+                first_pixel_idx = first_pixel_idx[0]
+                # Get all pixels from the first threshold-exceeding pixel to the end
+                non_zero_pixels = profile[first_pixel_idx:]
+                # Move these pixels to the top of the column, rest remains 0
                 new_img_array[s, :len(non_zero_pixels), x] = non_zero_pixels
+                # The rest of the column is already 0 from np.zeros_like
 
     img = new_img_array[:, ::-1, :]
-    # Remove the bottom rows after processing all slices, according to y_offset
-    img = img[:, :-y_offset, :]
-    img = img[:, ::-1, :]
+    
+    # Ensure we don't crop more than the image height
+    y_offset = min(y_offset, h-1)
+    if y_offset > 0:
+        img = img[:, :-y_offset, :]
+    
     img = find_max_zero(img, top_crop)
-    img = img[:, ::-1, :]
+    
+    # Final check to ensure we have a valid image
+    if img.size == 0 or any(dim == 0 for dim in img.shape):
+        raise ValueError("Untilt operation resulted in zero-size array. Check threshold and crop parameters.")
+        
     return img
 
 def binary_mask(img, thresholding_method, contrast, blurred, blur_size, outliers_size):
@@ -623,9 +641,15 @@ def generate_Height_Map(img, voxel_size, filename, output_folder, vmin, vmax):
     height_map[max_indices == 0] = 0 # Set zero indices to zero height
     height_map = height_map * slice_thickness  # Convert index to physical height
 
+    # Calculate figure size in inches based on the actual dimensions
+    # Convert pixels to inches
+    fig_width = w*dx
+    fig_height = h*dy
+    print(fig_width)
+    print(fig_height)
     # Generate and save Fire-coded height map
     output_path = os.path.join(output_folder, f"{filename}_HM")
-    fig, ax = plt.subplots(figsize=(slices, w))
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     im = ax.imshow(height_map, cmap='inferno', vmin=vmin, vmax=vmax)  # Set min and max range for cmap
     ax.axis('off')
     plt.savefig(f"{output_path}.tiff", dpi=300, bbox_inches='tight', pad_inches=0)
@@ -728,10 +752,15 @@ def generate_B_Map(img, voxel_size, filename, output_folder, vmin, vmax):
     # Calculate the biovolume map (maximum z value for each (x, y) position)
     non_zero_counts = np.count_nonzero(resliced_stack, axis=0)  # Maximum index along z-axis for each (x, y)   
     B_map = non_zero_counts * slice_thickness  # Convert index to physical height
-
+    # Convert pixels to inches
+    fig_width = w*dx
+    fig_height = h*dy
+    print(fig_width)
+    print(fig_height)
+    
     # Generate and save Fire-coded height map
     output_path = os.path.join(output_folder, f"{filename}_BM")
-    fig, ax = plt.subplots(figsize=(slices, w))
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     im = ax.imshow(B_map, cmap='inferno', vmin=vmin, vmax=vmax)  # Set min and max range for cmap
     ax.axis('off')
     plt.savefig(f"{output_path}.tiff", dpi=300, bbox_inches='tight', pad_inches=0)

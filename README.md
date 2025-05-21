@@ -20,7 +20,7 @@ The oct_analysis python package includes various functions for:
 ## Usage
 The documentation can be found in https://oct-analysis.readthedocs.io/en/latest/index.html
 
-Examples for the usage of the functions are described in oct_analysis/examples
+Examples for the usage of the functions are described in https://github.com/AndreasNetsch/oct_analysis/tree/main/examples
 
 ```python
 from oct_analysis import (

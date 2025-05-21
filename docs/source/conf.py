@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 project = "oct_analysis"
 copyright = "2025, Andreas Netsch"
 author = "Andreas Netsch"
-release = "0.1.1"
+release = "1.0.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

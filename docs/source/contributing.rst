@@ -10,7 +10,7 @@ Development Setup
 
    .. code-block:: bash
 
-       git clone https://github.com/yourusername/oct_analysis.git
+       git clone https://github.com/AndreasNetsch/oct_analysis.git
        cd oct_analysis
 
 2. Create a virtual environment and install development dependencies:
@@ -54,6 +54,7 @@ Pull Request Process
 3. Add your changes
 4. Run tests
 5. Submit a pull request
+6. Pull requst will be checked by admin prior to merge with main branch
 
 When you're ready to release a new version:
 
