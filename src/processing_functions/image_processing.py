@@ -265,6 +265,15 @@ def find_substratum(img, start_x, y_max, roi_width, scan_height, step_width):
                 maxSum = sum_val
                 memBot = i
         memBot1 = memBot
+    # Vorschlag: loops vektorisieren --> schneller
+    # 1. precompute roi-mean für ganzen stack:
+    # filtered = scipy.ndimage.uniform_filter1d(stack, size=roi, axis=2, mode='reflect')
+    # 2. maximum intensity in bestimmtem y-bereich finden:
+    # y_coords = np.argmax(filtered[:, ymin:ymax, :], axis=1)
+    # apply y-offset
+    # y_coords += y_offset
+    # nach diesen drei zeilen haben wir die koordinaten und können untilt oder remove_window machen
+
 
         # Process each slice
         for x in range(start_x, w, step_width):
