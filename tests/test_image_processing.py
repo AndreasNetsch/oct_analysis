@@ -8,7 +8,7 @@ from unittest import mock
 import os
 import tempfile
 
-from oct_analysis.image_processing import (
+from src.processing_functions.image_processing import (
     read_tiff, save_tiff, select_tiff_folder, convert_to_8bit,
     find_substratum, find_max_zero, untilt, voxel_count,
     generate_Height_Map, generate_B_Map, calculate_roughness,
