@@ -3,15 +3,17 @@ Image processing functions for oct_analysis
 """
 
 import cv2
+from sympy import li
 import tifffile as tiff
 import os
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import customtkinter as ctk
-from skimage import io, exposure, filters, morphology 
+from skimage import exposure, filters, morphology
+import scipy.ndimage
 
-def read_tiff(file_path):
+def read_tiff(file_path: str) -> tuple[np.ndarray, str, dict]:
     """
     Read a 3D TIFF stack and its metadata.
 
@@ -57,6 +59,7 @@ def read_tiff(file_path):
                     imagej_metadata[key] = value
             # Read the image stack
             img_stack = tif.asarray()
+            assert img_stack.dtype == np.float32, "Image stack is not in float32 format!"
             metadata = {
             'Z': int(imagej_metadata.get('slices', 1)),
             'Y': page.tags['ImageLength'].value, # type: ignore
@@ -75,6 +78,56 @@ def read_tiff(file_path):
         return img_stack, filename, metadata
     except Exception as e:
         raise ValueError(f"Error reading TIFF file: {str(e)}")
+
+def _normalize_tiff(tiff_stack: np.ndarray) -> np.ndarray:
+    """
+    Normalize a 3D TIFF stack to the range [0, 1].
+
+    Parameters
+    ----------
+    tiff_stack : numpy.ndarray
+        The 3D image stack to normalize (slices, height, width)
+
+    Returns
+    -------
+    numpy.ndarray
+        The normalized 3D image stack as a float32 array
+    """
+    if len(tiff_stack.shape) != 3:
+        raise ValueError("Input must be a 3D array (slices, height, width)")
+    
+    # Normalize each slice to the range [0, 1]
+    tiff_stack = tiff_stack.astype(np.float32)
+    tiff_stack -= np.min(tiff_stack)
+    tiff_stack /= np.max(tiff_stack)
+    
+    return tiff_stack
+
+
+
+
+    """
+    Normalize a 3D TIFF stack to the range [0, 1].
+
+    Parameters
+    ----------
+    tiff_stack : numpy.ndarray
+        The 3D image stack to normalize (slices, height, width)
+
+    Returns
+    -------
+    numpy.ndarray
+        The normalized 3D image stack as a float32 array
+    """
+    if len(tiff_stack.shape) != 3:
+        raise ValueError("Input must be a 3D array (slices, height, width)")
+    
+    # Normalize each slice to the range [0, 1]
+    tiff_stack = tiff_stack.astype(np.float32)
+    tiff_stack -= np.min(tiff_stack)
+    tiff_stack /= np.max(tiff_stack)
+    
+    return tiff_stack
 
 def save_tiff(img, file_path, filename, metadata=None):
     """
@@ -943,4 +996,120 @@ def calculate_porosity(img, threshold=0):
     print(f"Std Porosity = {std_porosity:.3f} %")
 
     return mean_porosity, std_porosity
+
+# Labeling-Functions
+def median_blur(img, filter_size=3):
+    """
+    Apply median blur to a 3D image stack.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        The 3D image stack as a numpy array (slices, height, width)
+    filter_size : int, optional
+        Size of the median filter (default is 3)
+
+    Returns
+    -------
+    numpy.ndarray
+        The blurred image stack as a numpy array
+    """
+    if len(img.shape) != 3:
+        raise ValueError("Input image must be a 3D stack (slices, height, width)")
+    
+    return scipy.ndimage.median_filter(img, size=(1, filter_size, filter_size)) # TODO: consider fast-median-filters module for performance improvements
+
+def locate_window(img, region_of_interest_size: int = 11, vertical_offset: int = 0, vertical_min: int = 0, vertical_max: int = 0):
+    # 1. precompute roi-mean für ganzen stack:
+    filtered = scipy.ndimage.uniform_filter1d(img, size=region_of_interest_size, axis=2, mode='reflect')
+    # 2. maximum intensity in bestimmtem y-bereich finden:
+    y_coords = np.argmax(filtered[:, vertical_min:vertical_max, :], axis=1)
+    # apply y-offset
+    y_coords += vertical_offset
+
+    return y_coords
+
+def zero_out_window(img, window_coords):
+    yy = np.arange(img.shape[1])  # Create a range for y-coordinates
+    yy = yy.reshape(1, -1, 1)  # Reshape to ensure it can be broadcasted
+    copy = img.copy()  # Create a copy of the image to avoid modifying the original
+    copy[yy < window_coords[:, np.newaxis, :]] = 0 # Set pixels above the window to zero
+    return copy
+
+def locate_substratum(img, start_x=0, roi_width=20, vertical_offset=0, vertical_min=0, vertical_max=0):
+    # 1. precompute roi-mean für ganzen stack:
+    filtered = scipy.ndimage.uniform_filter1d(img, size=roi_width, axis=2, mode='reflect')
+    # 2. maximum intensity in bestimmtem y-bereich finden:
+    y_coords = np.argmax(filtered[:, vertical_min:vertical_max, :], axis=1)
+    y_coords = y_coords + vertical_min # Adjust y-coordinates based on vertical_min, since argmax returns indices relative to the sliced region
+    # apply y-offset
+    y_coords += vertical_offset
+
+    return y_coords
+
+def zero_out_substratum(img, substratum_coords):
+    yy = np.arange(img.shape[1])  # Create a range for y-coordinates
+    yy = yy.reshape(1, -1, 1)  # Reshape to ensure it can be broadcasted
+    copy = img.copy()  # Create a copy of the image to avoid modifying the original
+    copy[yy >= substratum_coords[:, np.newaxis, :]] = 0  # Set pixels below the substratum to zero
+    return copy
+
+def binarize_ignore_zeros(img: np.ndarray, thresholding_method: str, contrast: float = 0):
+    """
+    Create a binary mask from an image stack, ignoring zero pixels.
+    """
+
+    # No gaussian blur applied here, since it would blur the zeroed-out regions and alter the 0-mask and thresholding outcomes, especially near the biofilm substratum.
+
+    nonzero_values = img[img > 0]  # Extract non-zero values
+
+    # p_low, p_high = np.percentile(nonzero_values, (contrast, 100-contrast))
+    # img_contrast_adjusted = exposure.rescale_intensity(img, in_range=(p_low, p_high)) # type: ignore
+    # img_contrast_adjusted[img == 0] = 0  # Ensure zero pixels remain zero after contrast adjustment
+
+    # nonzero_values = img_contrast_adjusted[img_contrast_adjusted > 0]  # Re-extract non-zero values after contrast adjustment
+    if thresholding_method == 'yen':
+        thresh = filters.threshold_yen(nonzero_values)
+        print(f"Yen's threshold: {thresh}")
+    elif thresholding_method == 'otsu':
+        thresh = filters.threshold_otsu(nonzero_values)
+        print(f"Otsu's threshold: {thresh}")
+    elif thresholding_method == 'li':
+        thresh = filters.threshold_li(nonzero_values)
+        print(f"Li's threshold: {thresh}")
+    elif thresholding_method == 'triangle':
+        thresh = filters.threshold_triangle(nonzero_values)
+        print(f"Triangle's threshold: {thresh}")
+    elif thresholding_method == 'none':
+        yen = filters.threshold_yen(nonzero_values)
+        otsu = filters.threshold_otsu(nonzero_values)
+        li = filters.threshold_li(nonzero_values)
+        triangle = filters.threshold_triangle(nonzero_values)
+        thresh = (yen + otsu + li + triangle) / 4  # Average of all thresholds
+        return yen, otsu, li, triangle, thresh
+    
+
+    # binary = (img > thresh).astype(np.uint8)
+    # binary[img == 0] = 0  # Set zero pixels to zero in the binary mask
+
+    # return binary
+
+def save_pngs(original_stack: np.ndarray, binary_stack: np.ndarray, original_filename: str, output_directory: str) -> None:
+    """
+    Save selected slices of the stack and its corresponding mask as PNG files.
+    """
+    assert original_stack.shape == binary_stack.shape, f"Stacks don't have the same (slices, height, width) shape: Original ({original_stack.shape}) vs Binary ({binary_stack.shape})"
+    
+    basedir = os.path.join(output_directory, original_filename)
+    os.makedirs(basedir, exist_ok=True)
+
+    Bscandir = os.path.join(basedir, 'Bscans')
+    Masksdir = os.path.join(basedir, 'Masks')
+    os.makedirs(Bscandir, exist_ok=True)
+    os.makedirs(Masksdir, exist_ok=True)
+    for i, (img, mask) in enumerate(zip(original_stack, binary_stack)):
+        img_filename = f"{original_filename}_Bscan_{i:03d}.png"
+        mask_filename = f"{original_filename}_Bscan_{i:03d}_mask.png"
+        tiff.imwrite(os.path.join(Bscandir, img_filename), img)
+        tiff.imwrite(os.path.join(Masksdir, mask_filename), mask)
 
