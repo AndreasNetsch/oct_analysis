@@ -3,7 +3,6 @@ Image processing functions for oct_analysis
 """
 
 import cv2
-from sympy import im
 import tifffile as tiff
 import os
 import csv
