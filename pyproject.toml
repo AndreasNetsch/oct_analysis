@@ -42,6 +42,7 @@ dependencies = [
   "flake8>=4.0.0",
   "customtkinter>=5.2.0",
   "scikit-image>=0.21.0",
+  "napari>=0.6.1",
 ]
 
 
