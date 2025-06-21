@@ -1,6 +1,13 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
+# ML: logs and model-checkpoints
+src/ml/logs/
+src/ml/models/
+
+# Webapp: static files
+src/webapp/static/
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/

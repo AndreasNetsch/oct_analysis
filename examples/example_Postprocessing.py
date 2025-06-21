@@ -1,4 +1,4 @@
-import oct_analysis.image_processing as oct
+from src.processing_functions import image_processing as oct
 import glob
 import os
 import numpy as np
