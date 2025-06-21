@@ -1061,9 +1061,9 @@ def binarize_ignore_zeros(img: np.ndarray):
 
     nonzero_values = img[img > 0]  # Extract non-zero values
 
-    thresh_yen = filters.threshold_yen(nonzero_values)
+    thresh = filters.threshold_triangle(nonzero_values)  # Use triangle thresholding on non-zero values
 
-    img_binary = img > thresh_yen  # Create binary mask based on Yen's threshold
+    img_binary = img > thresh  # Create binary mask based on Yen's threshold
     img_binary = img_binary.astype(np.uint8) * 255  # Convert boolean mask to uint8 (0 or 255)
     img_binary[img == 0] = 0  # Ensure zero pixels remain zero in the binary mask
     img_binary[img_binary == 255] = 1  # Convert to binary mask with values 0 and 1

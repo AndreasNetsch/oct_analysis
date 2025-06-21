@@ -127,27 +127,20 @@ def create_gui(viewer: napari.Viewer) -> None:
         else:
             viewer.add_image(stack_container['no_substratum'], name="no_substratum", colormap="magma", gamma=2.0, visible=True)
 
-    @magicgui(call_button="Binarize",
-                thresholding_method={"choices": ["otsu", 'yen'], "value": "otsu"},
-                contrast={"widget_type": "FloatSpinBox", "min": 0.0, "max": 1.0, "step": 0.1, "value": 0.0},
-            )
-    def binarize_widget(thresholding_method, contrast):
-        stack_container['binary'] = ip.binarize_ignore_zeros(
-                                                img=stack_container['no_substratum'],
-                                                thresholding_method=thresholding_method,
-                                                contrast=contrast,
-                                                )
+    @magicgui(call_button="Binarize")
+    def binarize_widget():
+        stack_container['binary'] = ip.binarize_ignore_zeros(img=stack_container['no_substratum'])
         stack_container["binary"] = stack_container["binary"].astype(np.uint8)
         if 'binary' in viewer.layers:
             viewer.layers['binary'].data = stack_container['binary']
         else:
-            viewer.add_labels(stack_container['binary'], name="binary", visible=True, )
+            viewer.add_labels(stack_container['binary'], name="binary", visible=True)
 
     @magicgui(call_button="Remove Outliers",
                 outliers_size={"widget_type": "SpinBox", "min": 1, "max": 20, "step": 1, "value": 2}
             )
     def remove_outliers_widget(outliers_size):
-        stack_container["binary"] = morphology.remove_small_objects(stack_container["binary"], min_size=outliers_size, connectivity=1)
+        stack_container["binary"] = morphology.remove_small_objects(stack_container["binary"].astype(bool), min_size=outliers_size, connectivity=1)
         stack_container["binary"] = stack_container["binary"].astype(np.uint8)
         viewer.layers['binary'].data = stack_container['binary']
 
@@ -156,7 +149,7 @@ def create_gui(viewer: napari.Viewer) -> None:
             )
     def save_pngs_widget(output_directory):
         ip.save_pngs(
-            original_stack=stack_container['reduced_data'] if 'reduced_data' in stack_container else stack_container['original_data'],
+            original_stack=stack_container['reduced_data'] if 'reduced_data' in stack_container else stack_container['original_normalized'],
             binary_stack=stack_container['binary'],
             original_filename= stack_container['filename'],
             output_directory=output_directory
