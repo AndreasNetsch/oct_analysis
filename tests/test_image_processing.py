@@ -25,7 +25,7 @@ def test_read_tiff_file_not_found():
 
 def test_read_tiff_returns_expected_outputs():
     """Test that read_tiff returns the expected outputs with correct metadata"""
-    fake_image = np.zeros((10, 20, 30), dtype=np.uint8)
+    fake_image = np.zeros((10, 20, 30), dtype=np.float32)
     fake_description = "slices=10\nunit=mm\nspacing=1.0"
 
     with mock.patch("os.path.isfile", return_value=True):
