@@ -3,7 +3,7 @@ Image processing functions for oct_analysis
 """
 
 import cv2
-from sympy import li
+from sympy import im
 import tifffile as tiff
 import os
 import csv
@@ -1054,45 +1054,21 @@ def zero_out_substratum(img, substratum_coords):
     copy[yy >= substratum_coords[:, np.newaxis, :]] = 0  # Set pixels below the substratum to zero
     return copy
 
-def binarize_ignore_zeros(img: np.ndarray, thresholding_method: str, contrast: float = 0):
+def binarize_ignore_zeros(img: np.ndarray):
     """
     Create a binary mask from an image stack, ignoring zero pixels.
     """
 
-    # No gaussian blur applied here, since it would blur the zeroed-out regions and alter the 0-mask and thresholding outcomes, especially near the biofilm substratum.
-
     nonzero_values = img[img > 0]  # Extract non-zero values
 
-    # p_low, p_high = np.percentile(nonzero_values, (contrast, 100-contrast))
-    # img_contrast_adjusted = exposure.rescale_intensity(img, in_range=(p_low, p_high)) # type: ignore
-    # img_contrast_adjusted[img == 0] = 0  # Ensure zero pixels remain zero after contrast adjustment
+    thresh_yen = filters.threshold_yen(nonzero_values)
 
-    # nonzero_values = img_contrast_adjusted[img_contrast_adjusted > 0]  # Re-extract non-zero values after contrast adjustment
-    if thresholding_method == 'yen':
-        thresh = filters.threshold_yen(nonzero_values)
-        print(f"Yen's threshold: {thresh}")
-    elif thresholding_method == 'otsu':
-        thresh = filters.threshold_otsu(nonzero_values)
-        print(f"Otsu's threshold: {thresh}")
-    elif thresholding_method == 'li':
-        thresh = filters.threshold_li(nonzero_values)
-        print(f"Li's threshold: {thresh}")
-    elif thresholding_method == 'triangle':
-        thresh = filters.threshold_triangle(nonzero_values)
-        print(f"Triangle's threshold: {thresh}")
-    elif thresholding_method == 'none':
-        yen = filters.threshold_yen(nonzero_values)
-        otsu = filters.threshold_otsu(nonzero_values)
-        li = filters.threshold_li(nonzero_values)
-        triangle = filters.threshold_triangle(nonzero_values)
-        thresh = (yen + otsu + li + triangle) / 4  # Average of all thresholds
-        return yen, otsu, li, triangle, thresh
-    
+    img_binary = img > thresh_yen  # Create binary mask based on Yen's threshold
+    img_binary = img_binary.astype(np.uint8) * 255  # Convert boolean mask to uint8 (0 or 255)
+    img_binary[img == 0] = 0  # Ensure zero pixels remain zero in the binary mask
+    img_binary[img_binary == 255] = 1  # Convert to binary mask with values 0 and 1
 
-    # binary = (img > thresh).astype(np.uint8)
-    # binary[img == 0] = 0  # Set zero pixels to zero in the binary mask
-
-    # return binary
+    return img_binary
 
 def save_pngs(original_stack: np.ndarray, binary_stack: np.ndarray, original_filename: str, output_directory: str) -> None:
     """
