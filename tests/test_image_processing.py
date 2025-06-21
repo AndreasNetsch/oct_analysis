@@ -25,7 +25,7 @@ def test_read_tiff_file_not_found():
 
 def test_read_tiff_returns_expected_outputs():
     """Test that read_tiff returns the expected outputs with correct metadata"""
-    fake_image = np.zeros((10, 20, 30), dtype=np.uint8)
+    fake_image = np.zeros((10, 20, 30), dtype=np.float32)
     fake_description = "slices=10\nunit=mm\nspacing=1.0"
 
     with mock.patch("os.path.isfile", return_value=True):
@@ -47,7 +47,7 @@ def test_read_tiff_returns_expected_outputs():
             # Setup mock for series info
             mock_series = mock.Mock()
             mock_series.shape = (10, 20, 30)
-            mock_series.dtype = np.uint8
+            mock_series.dtype = np.float32
             mock_series.axes = 'ZYX'
             mock_tif.return_value.__enter__.return_value.series = [mock_series]
 
@@ -56,7 +56,7 @@ def test_read_tiff_returns_expected_outputs():
             # Test image output
             assert isinstance(img, np.ndarray)
             assert img.shape == (10, 20, 30)
-            assert img.dtype == np.uint8
+            assert img.dtype == np.float32
 
             # Test filename output
             assert isinstance(filename, str)
@@ -68,7 +68,7 @@ def test_read_tiff_returns_expected_outputs():
             assert metadata['Y'] == 20
             assert metadata['X'] == 30
             assert metadata['shape'] == (10, 20, 30)
-            assert metadata['dtype'] == str(np.uint8)
+            assert metadata['dtype'] == str(np.float32)
             assert metadata['axes'] == 'ZYX'
             assert metadata['XResolution'] == (1, 1)
             assert metadata['YResolution'] == (1, 1)
