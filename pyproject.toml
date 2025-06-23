@@ -1,27 +1,7 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["uv"]
+build-backend = "uv"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-
-[tool.black]
-line-length = 120
-target-version = ["py38"]
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
 [project]
 name = "oct_analysis"
 version = "1.0.1"
@@ -31,8 +11,8 @@ authors = [
   {name = "Jonas Ullmann", email = "ullmann@dvgw-ebi.de"}
 ]
 readme = "README.md"
-requires-python = ">=3.10, <3.13"
 license = {text = "MIT"}
+requires-python = ">=3.10, <3.13"
 dependencies = [
   "numpy>=1.20.0",
   "opencv-python>=4.5.0",
@@ -45,9 +25,13 @@ dependencies = [
   "napari>=0.6.1",
 ]
 
-
 [project.optional-dependencies]
 dev = [
+  "ruff",
+  "pre-commit",
+  "sphinx",
+  "sphinx-rtd-theme",
+  "sphinx-autodoc-typehints",
   "albucore==0.0.24",
   "albumentations==2.0.6",
   "annotated-types==0.7.0",
@@ -96,10 +80,18 @@ dev = [
   "urllib3==2.4.0",
 ]
 
-[tool.uv]
-dev-dependencies = [
-    "napari>=0.6.1",
-    "napari-clusters-plotter>=0.6.2",
-    "oct_analysis[dev]",
-    "pyside6>=6.9.0",
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+select = [
+  "E", # Errors
+  "F", # Fatal errors
+  "B", # Bugs
+  "I", # Imports
 ]
+exclude = [".git", ".venv", "__pycache__", "build", "dist", "docs"]
+
+[tool.uv]
+dev-dependencies = ["oct_analysis[dev]"]
