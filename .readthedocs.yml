@@ -7,12 +7,9 @@ build:
 
 python:
   install:
-    - method: pip
+    - method: uv
       path: .
-      extra_requirements:
-        - dev
-    - requirements: docs/requirements.txt
 
 sphinx:
   configuration: docs/source/conf.py
-  fail_on_warning: false
+  fail_on_warning: true
