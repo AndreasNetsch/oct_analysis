@@ -11,7 +11,7 @@ from pathlib import Path
 import scipy.ndimage
 from skimage import morphology
 
-from src.processing_functions import image_processing as ip
+from src.oct_analysis import processing_functions as ip
 
 
 def create_gui(viewer: napari.Viewer) -> None:
@@ -21,15 +21,35 @@ def create_gui(viewer: napari.Viewer) -> None:
 
     stack_container = {} # holds all relevant data during the session
     def update_widgets():
-        locate_window_widget.ymax.value = int(stack_container["original_normalized"].shape[1] * 0.25) if 'original_normalized' in stack_container else 100
-        locate_substratum_widget.ymin.value = int(stack_container["original_normalized"].shape[1] * 0.6) if 'original_normalized' in stack_container else 200
-        locate_substratum_widget.ymax.value = int(stack_container["original_normalized"].shape[1]) if 'original_normalized' in stack_container else 1000
-        save_pngs_widget.output_directory.value = str(stack_container['directory']) if 'directory' in stack_container else str(Path.home())
+        locate_window_widget.ymax.value = (
+            int(stack_container["original_normalized"].shape[1] * 0.25)
+            if 'original_normalized' in stack_container
+            else 100
+        )
+        locate_substratum_widget.ymin.value = (
+            int(stack_container["original_normalized"].shape[1] * 0.6)
+            if 'original_normalized' in stack_container
+            else 200
+        )
+        locate_substratum_widget.ymax.value = (
+            int(stack_container["original_normalized"].shape[1])
+            if 'original_normalized' in stack_container
+            else 1000
+        )
+        save_pngs_widget.output_directory.value = (
+            str(stack_container['directory'])
+            if 'directory' in stack_container
+            else str(Path.home())
+        )
 
     def load_widget():
         # hidden filedialog
         filepath, _ = QFileDialog.getOpenFileName(
-            None, 'Select TIF file', '', 'TIF files (*.tif *.tiff)')
+            None,
+            'Select TIF file',
+            '',
+            'TIF files (*.tif *.tiff)'
+        ) # type: ignore
         if not filepath:
             show_info("No file selected.")
             return # Abbrechen
@@ -37,7 +57,12 @@ def create_gui(viewer: napari.Viewer) -> None:
         stack_container['original_normalized'] = ip._normalize_tiff(original_data)
         stack_container['directory'] = Path(filepath).parent
         viewer.layers.clear()
-        viewer.add_image(stack_container["original_normalized"], name="original_normalized", colormap="magma", gamma=2.0, visible=True)
+        viewer.add_image(
+            stack_container["original_normalized"],
+            name="original_normalized",
+            colormap="magma", gamma=2.0,
+            visible=True
+        )
         show_info(f"Loaded {stack_container['filename']}")
 
         update_widgets()

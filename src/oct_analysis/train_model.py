@@ -30,7 +30,7 @@ import segmentation_models_pytorch as smp
 from pathlib import Path
 
 # own modules
-from datasets import OCTDataset
+from src.oct_analysis.ml_datasets import OCTDataset
 
 # Globals
 #augmentations = A.Compose([
@@ -58,7 +58,7 @@ val_imgs = input('Enter path to validation images: ').strip()
 val_masks = input('Enter path to validation masks: ').strip()
 
 # 1. Set up logging
-logfile = os.path.join(current_dir, 'logs', f'{now}_training_log.txt')
+logfile = os.path.join(current_dir, 'ml_logs', f'{now}_training_log.txt')
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -66,7 +66,7 @@ logging.basicConfig(
     )
 logger = logging.getLogger()
 
-# Program entry point ---------------------------------------------------------------------------------------------------
+# Program entry point --------------------------------------------------------------------------------------------------
 def main():
     logger.info(f'Logging to file: {logfile}')
     logger.info('Initializing training sequence for OCT semantic segmentation model...')
@@ -107,7 +107,7 @@ def main():
     class_distribution = torch.tensor([cls_dist_dict[cls] for cls in class_labels])
     inverse_class_distribution = 1 / class_distribution # inverse class distribution for class weights
     norm_weights = inverse_class_distribution / inverse_class_distribution.sum() # normalize class weights to sum to 1
-    class_weights = norm_weights * n_classes # Gewichtung beim Training (background, biofilm, membrane, optical window, spacer) --> inverse class distribution
+    class_weights = norm_weights * n_classes # Gewichtung beim Training --> inverse class distribution
 
     logger.info(f'Hyperparameters initialized: {locals()}')
 
@@ -125,7 +125,7 @@ def main():
 
     # 5. Initialize model, loss function, optimizer, metrics, device
     model = build_model(encoder, weights, colorchannels, n_classes, activation, depth)
-    model.segmentation_head[0].bias.data = torch.log(class_distribution) # set bias to log of class distribution (logits) so the model has a good starting point for training
+    model.segmentation_head[0].bias.data = torch.log(class_distribution) # set bias -> good starting point for training
     optimizer = optim.Adam(model.parameters(), lr=learnrate)
     loss_fn = nn.CrossEntropyLoss(weight=class_weights)
     iou_metric = MulticlassJaccardIndex(num_classes=n_classes, average=None)
@@ -159,7 +159,7 @@ def main():
     logger.info(f'Model training completed in {t1-t0:.1f} seconds.')
     
     # 7. Save model
-    model_dir = os.path.join(current_dir, 'models')
+    model_dir = os.path.join(current_dir, 'ml_models')
     os.makedirs(model_dir, exist_ok=True)
     modelpath = os.path.join(model_dir, f'{now}_model.pth')
     torch.save(model.state_dict(), modelpath)
@@ -225,11 +225,11 @@ def train_one_epoch(
         image = image.to(device)
         mask = mask.to(device)
 
-        prediction = model(image) # forward pass (prediction). outputs = predicted class probabilities (apply softmax --> then you have a confidence map)
+        prediction = model(image) # outputs = predicted class probabilities (apply softmax --> confidence map)
         loss = loss_fn(prediction, mask) # calculate loss
-        loss.backward() # calculate gradient of current batch, gradients accumulate until cleared (by optimizer or zero_grad)
+        loss.backward() # calculate gradient of current batch, gradients accumulate until cleared by optim or zero_grad
 
-        if (i + 1) % virtual_batch_size == 0 or (i + 1) == len(dataloader): # accumulate gradient of virtual_batch_size (8 training images)
+        if (i + 1) % virtual_batch_size == 0 or (i + 1) == len(dataloader): # accumulate gradient of virtual_batch_size
             optimizer.step() # update model params
             optimizer.zero_grad() # reset gradients to 0
 
@@ -316,7 +316,15 @@ def train_model(
         t0_epoch = time.perf_counter()
 
         metric.reset()
-        train_loss, train_iou_cls = train_one_epoch(model, training_dataloader, optimizer, loss_function, batch_size, device, metric)
+        train_loss, train_iou_cls = train_one_epoch(
+            model,
+            training_dataloader,
+            optimizer,
+            loss_function,
+            batch_size,
+            device,
+            metric
+        )
         logger.info(f'Epoch {epoch+1}/{n_epochs}: train_loss= {train_loss:.4f}')
 
         metric.reset()
@@ -347,7 +355,7 @@ def train_model(
             best_model_state = model.state_dict()
             patience_counter = 0
             # Save model checkpoint
-            model_dir = os.path.join(current_dir, 'models')
+            model_dir = os.path.join(current_dir, 'ml_models')
             os.makedirs(model_dir, exist_ok=True)
             modelpath = os.path.join(model_dir, f'{now}_checkpoint_model.pth')
             torch.save(best_model_state, modelpath)
@@ -365,7 +373,7 @@ def train_model(
     plt.ioff()
     plt.show() # show final plot
 
-    log_dir = os.path.join(current_dir, 'logs')
+    log_dir = os.path.join(current_dir, 'ml_logs')
     os.makedirs(log_dir, exist_ok=True)
     figpath = os.path.join(log_dir, f'{now}_training_metrics.png')
     fig.savefig(figpath)

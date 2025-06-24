@@ -1,6 +1,6 @@
 import napari
 
-from src.labeling_gui.ui_widgets import create_gui
+from src.oct_analysis.ui_widgets import create_gui
 
 
 if __name__ == "__main__":

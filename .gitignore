@@ -1,9 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
+# VSCode settings
+.vscode
+
 # ML: logs and model-checkpoints
-src/ml/logs/
-src/ml/models/
+src/oct_analysis/ml_logs/
+src/oct_analysis/ml_models/
 
 # Webapp: static files
 src/webapp/static/

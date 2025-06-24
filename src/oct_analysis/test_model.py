@@ -6,7 +6,7 @@ import segmentation_models_pytorch as smp
 
 
 # own modules
-from datasets import OCTDataset
+from src.oct_analysis.ml_datasets import OCTDataset
 
 
 def main():

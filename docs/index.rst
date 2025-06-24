@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to oct_analysis's documentation!
-=======================================
+========================================
 
 **oct_analysis** is a Python library that provides image processing utilities.
 
@@ -19,7 +19,7 @@ Welcome to oct_analysis's documentation!
    changelog
 
 Indices and tables
-=================
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`

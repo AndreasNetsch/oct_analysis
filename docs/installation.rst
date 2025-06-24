@@ -1,14 +1,14 @@
 Installation
-===========
+============
 
 Requirements
------------
+------------
 
 * Python 3.6 or higher
 * pip (Python package installer)
 
 Basic Installation
-----------------
+------------------
 
 You can install **oct_analysis** using pip:
 
@@ -19,7 +19,7 @@ You can install **oct_analysis** using pip:
 This will install the package and all required dependencies.
 
 Development Installation
----------------------
+------------------------
 
 For development, you can install **oct_analysis** from the source:
 
@@ -46,7 +46,7 @@ For development, you can install **oct_analysis** from the source:
 This will install the package in development mode, along with all development dependencies.
 
 Dependencies
------------
+------------
 
 The following packages are required:
 

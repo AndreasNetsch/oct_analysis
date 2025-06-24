@@ -1,7 +1,9 @@
-from src.processing_functions import image_processing as oct
 import glob
 import os
+
 import numpy as np
+
+from src.oct_analysis import processing_functions as oct
 
 input_folder = oct.select_tiff_folder()
 output_folder = oct.select_tiff_folder()
@@ -47,7 +49,7 @@ for input_filename in tiff_files:
     img_binary_blurred = oct.binary_mask(img, thresholding_method='otsu', contrast=0.35, blurred=True, blur_size=5, outliers_size=5)
     img_binary_difference = np.clip(img_binary_blurred.astype(np.int16) - img_binary_raw.astype(np.int16), 0, 255).astype(np.uint8)
     img_binary = np.clip(img_binary_blurred.astype(np.int16) - img_binary_difference.astype(np.int16), 0, 255).astype(np.uint8)
-    
+
     oct.save_tiff(img_binary, output_folder, f"{filename}_binary", metadata=metadata)
 
 
@@ -56,11 +58,11 @@ for input_filename in tiff_files:
     slices, height, width = img_binary.shape
     x_resolution = metadata.get('XResolution', 1.0)  # pixels per mm
     y_resolution = metadata.get('YResolution', 1.0)  # pixels per mm
-    x_voxel_size = round((x_resolution[1]/x_resolution[0]), 4)   # mm/px     
+    x_voxel_size = round((x_resolution[1]/x_resolution[0]), 4)   # mm/px
     y_voxel_size = round((y_resolution[1]/y_resolution[0]), 4)   # mm/px
     z_voxel_size = round(metadata.get('spacing', 1.0), 4)
     image_area = slices*z_voxel_size*width*x_voxel_size # mm^2
-    # Calculate volume of the biofilm       
+    # Calculate volume of the biofilm
     biovolume = oct.voxel_count(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size))
     # Calculate height map (thickness map) of the biofilm
     height_map, min_thickness, mean_thickness, max_thickness, std_thickness, substratum_coverage = oct.generate_Height_Map(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), filename=filename, output_folder=output_folder, vmin=0, vmax=0.5)
