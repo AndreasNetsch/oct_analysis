@@ -53,10 +53,28 @@ for input_filename in tiff_files:
     oct.save_tiff(img, output_folder, filename, metadata=metadata)
 
     # Create a binary mask of the image
-    img_binary_raw = oct.binary_mask(img, thresholding_method='otsu', contrast=0.35, blurred=True, blur_size=1, outliers_size=1)
-    img_binary_blurred = oct.binary_mask(img, thresholding_method='otsu', contrast=1, blurred=True, blur_size=3, outliers_size=3)
-    img_binary_difference = np.clip(img_binary_blurred.astype(np.int16) - img_binary_raw.astype(np.int16), 0, 255).astype(np.uint8)
-    img_binary = np.clip(img_binary_blurred.astype(np.int16) - img_binary_difference.astype(np.int16), 0, 255).astype(np.uint8)
+    img_binary_raw = oct.binary_mask(
+        img,
+        thresholding_method='otsu',
+        contrast=0.35,
+        blurred=True,
+        blur_size=1,
+        outliers_size=1
+    )
+    img_binary_blurred = oct.binary_mask(
+        img,
+        thresholding_method='otsu',
+        contrast=1,
+        blurred=True,
+        blur_size=3,
+        outliers_size=3
+    )
+    img_binary_difference = (
+        np.clip(img_binary_blurred.astype(np.int16) - img_binary_raw.astype(np.int16), 0, 255).astype(np.uint8)
+    )
+    img_binary = (
+        np.clip(img_binary_blurred.astype(np.int16) - img_binary_difference.astype(np.int16), 0, 255).astype(np.uint8)
+    )
 
     oct.save_tiff(img_binary_raw, output_folder, f"{filename}_binary", metadata=metadata)
 
@@ -73,11 +91,36 @@ for input_filename in tiff_files:
     # Calculate volume of the biofilm
     biovolume = oct.voxel_count(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size))
     # Calculate height map (thickness map) of the biofilm
-    height_map, min_thickness, mean_thickness, max_thickness, std_thickness, substratum_coverage = oct.generate_Height_Map(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), filename=filename, output_folder=output_folder, vmin=0, vmax=0.5)
+    height_map, min_thickness, mean_thickness, max_thickness, std_thickness, substratum_coverage = (
+        oct.generate_Height_Map(
+            img_binary,
+            voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size),
+            filename=filename,
+            output_folder=output_folder,
+            vmin=0,
+            vmax=0.5
+        )
+    )
     # Calculate biovolume map of the biofilm
-    B_map, min_thickness_B, mean_thickness_B_map, max_thickness_B_map, std_thickness_B_map, substratum_coverage_B_map = oct.generate_B_Map(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), filename=filename, output_folder=output_folder, vmin=0, vmax=0.5)
+    B_map, min_thickness_B, mean_thickness_B_map, max_thickness_B_map, std_thickness_B_map, substratum_coverage_B_map=(
+        oct.generate_B_Map(
+            img_binary,
+            voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size),
+            filename=filename,
+            output_folder=output_folder,
+            vmin=0,
+            vmax=0.5
+        )
+    )
     # Calculate roughness of the biofilm
-    mean_arithmetic_roughness, std_arithmetric_roughness, mean_rms_roughness, std_rms_roughness, mean_roughness_coeff, std_roughness_coeff=oct.calculate_roughness(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), threshold=0)
+    (
+        mean_arithmetic_roughness,
+        std_arithmetric_roughness,
+        mean_rms_roughness,
+        std_rms_roughness,
+        mean_roughness_coeff,
+        std_roughness_coeff
+    ) = oct.calculate_roughness(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), threshold=0)
     # Calculate porosity of the biofilm
     mean_porosity, std_porosity = oct.calculate_porosity(img_binary, threshold=0)
 

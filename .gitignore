@@ -5,8 +5,9 @@
 .vscode
 
 # ML: logs and model-checkpoints
-src/oct_analysis/ml_logs/
-src/oct_analysis/ml_models/
+*.txt
+*.png
+*.pth
 
 # Webapp: static files
 src/webapp/static/

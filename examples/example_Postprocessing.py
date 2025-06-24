@@ -51,11 +51,37 @@ for input_filename in tiff_files:
     # Calculate volume of the biofilm
     biovolume = oct.voxel_count(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size))
     # Calculate height map (thickness map) of the biofilm
-    height_map, min_thickness, mean_thickness, max_thickness, std_thickness, substratum_coverage = oct.generate_Height_Map(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), filename=filename, output_folder=output_folder, vmin=0, vmax=0.4)
+    height_map, min_thickness, mean_thickness, max_thickness, std_thickness, substratum_coverage = (
+        oct.generate_Height_Map(
+            img_binary,
+            voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size),
+            filename=filename,
+            output_folder=output_folder,
+            vmin=0,
+            vmax=0.4
+        )
+    )
     # Calculate biovolume map of the biofilm
-    B_map, min_thickness_B, mean_thickness_B_map, max_thickness_B_map, std_thickness_B_map, substratum_coverage_B_map = oct.generate_B_Map(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), filename=filename, output_folder=output_folder, vmin=0, vmax=0.4)
+    B_map, min_thickness_B, mean_thickness_B_map, max_thickness_B_map, std_thickness_B_map, substratum_coverage_B_map=(
+        oct.generate_B_Map(
+            img_binary,
+            voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size),
+            filename=filename,
+            output_folder=output_folder,
+            vmin=0,
+            vmax=0.4
+        )
+    )
     # Calculate roughness of the biofilm
-    mean_arithmetic_roughness, std_arithmetric_roughness, mean_rms_roughness, std_rms_roughness, mean_roughness_coeff, std_roughness_coeff=oct.calculate_roughness(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), threshold=0)
+    results = oct.calculate_roughness(img_binary, voxel_size=(z_voxel_size, y_voxel_size, x_voxel_size), threshold=0)
+    (
+        mean_arithmetic_roughness,
+        std_arithmetric_roughness,
+        mean_rms_roughness,
+        std_rms_roughness,
+        mean_roughness_coeff,
+        std_roughness_coeff
+    ) = results
     # Calculate porosity of the biofilm
     mean_porosity, std_porosity = oct.calculate_porosity(img_binary, threshold=0)
 

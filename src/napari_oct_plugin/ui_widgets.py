@@ -76,17 +76,31 @@ def create_gui(viewer: napari.Viewer) -> None:
         if 'median_filtered' in viewer.layers:
             viewer.layers['median_filtered'].data = stack_container['median_filtered']
         else:
-            viewer.add_image(stack_container['median_filtered'], name="median_filtered", colormap="magma", gamma=2.0, visible=False)
+            viewer.add_image(
+                stack_container['median_filtered'],
+                name="median_filtered",
+                colormap="magma",
+                gamma=2.0,
+                visible=False
+            )
 
     @magicgui(call_button="Apply ROI Filter",
                 roi_width={"widget_type": "SpinBox", "min": 1, "max": 101, "step": 2, "value": 11}
     )
     def roi_filter_widget(roi_width):
-        stack_container['roi_filtered'] = scipy.ndimage.uniform_filter1d(stack_container["median_filtered"], size=roi_width, axis=2, mode='reflect')
+        stack_container['roi_filtered'] = scipy.ndimage.uniform_filter1d(
+            stack_container["median_filtered"], size=roi_width, axis=2, mode='reflect'
+        )
         if 'roi_filtered' in viewer.layers:
             viewer.layers['roi_filtered'].data = stack_container['roi_filtered']
         else:
-            viewer.add_image(stack_container['roi_filtered'], name="roi_filtered", colormap="magma", gamma=2.0, visible=False)
+            viewer.add_image(
+                stack_container['roi_filtered'],
+                name="roi_filtered",
+                colormap="magma",
+                gamma=2.0,
+                visible=False
+            )
 
     @magicgui(call_button="Locate Window",
                 ymin={"widget_type": "SpinBox", "min": 0, "max": 1000, "step": 1, "value": 0},
@@ -114,7 +128,9 @@ def create_gui(viewer: napari.Viewer) -> None:
 
     @magicgui(call_button="Zero Out Window")
     def zero_out_window_widget():
-        stack_container['no_window'] = ip.zero_out_window(stack_container['original_normalized'], stack_container['window_coords'])
+        stack_container['no_window'] = ip.zero_out_window(
+            stack_container['original_normalized'], stack_container['window_coords']
+        )
         if 'no_window' in viewer.layers:
             viewer.layers['no_window'].data = stack_container['no_window']
         else:
@@ -146,11 +162,22 @@ def create_gui(viewer: napari.Viewer) -> None:
 
     @magicgui(call_button="Zero Out Substratum")
     def zero_out_substratum_widget():
-        stack_container['no_substratum'] = ip.zero_out_substratum(stack_container["no_window"] if 'no_window' in stack_container else stack_container['original_normalized'], stack_container['substratum_coords'])
+        stack_container['no_substratum'] = (
+            ip.zero_out_substratum(stack_container["no_window"]
+            if 'no_window' in stack_container
+            else stack_container['original_normalized'],
+            stack_container['substratum_coords'])
+        )
         if 'no_substratum' in viewer.layers:
             viewer.layers['no_substratum'].data = stack_container['no_substratum']
         else:
-            viewer.add_image(stack_container['no_substratum'], name="no_substratum", colormap="magma", gamma=2.0, visible=True)
+            viewer.add_image(
+                stack_container['no_substratum'],
+                name="no_substratum",
+                colormap="magma",
+                gamma=2.0,
+                visible=True
+            )
 
     @magicgui(call_button="Binarize")
     def binarize_widget():
@@ -165,7 +192,9 @@ def create_gui(viewer: napari.Viewer) -> None:
                 outliers_size={"widget_type": "SpinBox", "min": 1, "max": 20, "step": 1, "value": 2}
             )
     def remove_outliers_widget(outliers_size):
-        stack_container["binary"] = morphology.remove_small_objects(stack_container["binary"].astype(bool), min_size=outliers_size, connectivity=1)
+        stack_container["binary"] = morphology.remove_small_objects(
+            stack_container["binary"].astype(bool), min_size=outliers_size, connectivity=1
+        )
         stack_container["binary"] = stack_container["binary"].astype(np.uint8)
         viewer.layers['binary'].data = stack_container['binary']
 

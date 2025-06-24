@@ -30,7 +30,7 @@ import segmentation_models_pytorch as smp
 from pathlib import Path
 
 # own modules
-from src.oct_analysis.ml_datasets import OCTDataset
+from src.ml.ml_datasets import OCTDataset
 
 # Globals
 #augmentations = A.Compose([
@@ -74,11 +74,6 @@ def main():
     # 2. Set random seeds for reproducability
     set_random_seeds(rand_seed)
     logger.info(f'Random seeds set for reproducability: {rand_seed}')
-    
-
-    # test_mask = r'C:\Users\sx1218\Arbeitsordner\24.25-ML-OCT\data\biofilm\stock\train_masks\train\biofilm_ex_Z1_semantic_mask.png'
-    # test_image = r'C:\Users\sx1218\Arbeitsordner\24.25-ML-OCT\data\biofilm\stock\train_images\train\biofilm_ex_Z1.png'
-
 
     # 3. Set parameters
     # 3.1 Set model architecture

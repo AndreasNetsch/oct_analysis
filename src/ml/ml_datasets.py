@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 from PIL import Image
-import torch # noqa: ignore=I001
+import torch
 from torch.utils.data import Dataset
 
 

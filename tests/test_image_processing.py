@@ -9,7 +9,7 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from src.processing_functions.image_processing import (
+from src.oct_analysis.processing_functions import (
     binary_mask,
     calculate_porosity,
     calculate_roughness,

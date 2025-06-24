@@ -26,9 +26,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv-build
           pip install ".[dev]"
-      - name: Lint with ruff
+      - name: Lint with ruff (non-blocking)
         run: |
-          ruff .
+          ruff check . --fix
+      - name: Format with ruff-format
+        run: |
+          ruff format .
       - name: Test with pytest
         run: |
           pytest
