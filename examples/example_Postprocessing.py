@@ -1,7 +1,7 @@
 import glob
 import os
 
-from src.oct_analysis import processing_functions as oct
+from ebi_oct.octools import processing_functions as oct
 
 input_folder = oct.select_tiff_folder()
 output_folder = oct.select_tiff_folder()
