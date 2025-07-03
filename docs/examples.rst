@@ -1,8 +1,8 @@
 Examples
-=====
+========
 
 Reading TIFF Images
-------------------
+-------------------
 
 To read a TIFF image using **oct_analysis**, you can use the ``read_tiff`` function:
 
@@ -17,7 +17,7 @@ To read a TIFF image using **oct_analysis**, you can use the ``read_tiff`` funct
     print(f"Image shape: {image.shape}")
 
 Finding Substratum in Images
----------------------------
+----------------------------
 
 To find and process the substratum in an image, you can use the ``find_substratum`` function:
 
@@ -38,7 +38,7 @@ To find and process the substratum in an image, you can use the ``find_substratu
     # The function returns a processed image where areas above the detected substratum are set to black
 
 Error Handling
--------------
+--------------
 
 The ``read_tiff`` function provides built-in error handling:
 

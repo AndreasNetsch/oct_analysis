@@ -3,6 +3,8 @@ Changelog
 
 Version 1.0.1 (2024-05-20)
 -------------------------
+Version 1.0.0 (2024-05-20)
+--------------------------
 
 * Major release with complete feature set
 * Enhanced TIFF file handling with metadata support
@@ -16,7 +18,7 @@ Version 1.0.1 (2024-05-20)
 * Added test coverage for all features
 
 Version 0.1.1 (2025-03-14)
--------------------------
+--------------------------
 
 * Added support for TIFF image processing
 * Implemented substratum detection
@@ -24,7 +26,7 @@ Version 0.1.1 (2025-03-14)
 * Added documentation
 
 Version 0.1.0 (2025-03-01)
--------------------------
+--------------------------
 
 * Initial release
 * Basic image processing functionality

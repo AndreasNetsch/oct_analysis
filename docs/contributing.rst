@@ -4,7 +4,7 @@ Contributing
 We welcome contributions to **oct_analysis**!
 
 Development Setup
-----------------
+-----------------
 
 1. Clone the repository:
 
@@ -47,7 +47,7 @@ Make sure to write tests for any new functionality. Run the tests with pytest:
     pytest
 
 Pull Request Process
--------------------
+--------------------
 
 1. Fork the repository
 2. Create a feature branch

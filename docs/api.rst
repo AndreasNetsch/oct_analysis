@@ -2,12 +2,12 @@ API Reference
 =============
 
 Image Processing
----------------
+----------------
 
 Core Functions
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
-.. automodule:: oct_analysis.image_processing
+.. automodule:: src.oct_analysis.processing_functions.image_processing
    :members:
    :undoc-members:
    :show-inheritance:
