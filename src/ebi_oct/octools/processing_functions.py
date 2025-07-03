@@ -11,6 +11,11 @@ import matplotlib.pyplot as plt
 import customtkinter as ctk
 from skimage import exposure, filters, morphology
 import scipy.ndimage
+from pathlib import Path
+import tempfile
+import zipfile
+import xml.etree.ElementTree as ET
+import nibabel as nib
 
 def read_tiff(file_path: str) -> tuple[np.ndarray, str, dict]:
     """
@@ -996,98 +1001,165 @@ def calculate_porosity(img, threshold=0):
 
     return mean_porosity, std_porosity
 
+
+
+
+# Labeling functions
+## utility functions
+def load_oct(filepath: Path):
+    oct_as_zip = filepath.with_suffix('.zip')
+    renamed = False
+    try:
+        filepath.rename(oct_as_zip)
+        renamed = True
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            header_path = tmp_path / 'Header.xml'
+            data_path = tmp_path / 'data' / 'Intensity.data'
+            with zipfile.ZipFile(oct_as_zip, 'r') as zip_ref:
+                zip_ref.extractall(tmp_path)
+
+            # get metadata
+            tree = ET.parse(header_path)
+            root = tree.getroot()
+
+            try:
+                def get(path, cast=str):
+                    element = root.find(path)
+                    return cast(element.text) if element is not None else 0
+
+                meta = {
+                    'size_px': {
+                        'z': int(get("Image/SizePixel/SizeZ")),
+                        'y': int(get("Image/SizePixel/SizeY")),
+                        'x': int(get("Image/SizePixel/SizeX")),
+                    },
+                    'fov_mm': {
+                        'z': float(get("Image/SizeReal/SizeZ")),
+                        'y': float(get("Image/SizeReal/SizeY")),
+                        'x': float(get("Image/SizeReal/SizeX")),
+                    },
+                    'spacing_mm': {
+                        'z': float(get("Image/PixelSpacing/SizeZ")),
+                        'y': float(get("Image/PixelSpacing/SizeY")),
+                        'x': float(get("Image/PixelSpacing/SizeX")),
+                    },
+                    'instrument': {
+                        'model': get("Instrument/Model"),
+                        'serial': get("Instrument/Serial"),
+                        'central_wavelength': float(get("Instrument/CentralWavelength")),
+                    },
+                    'dtype': get("Image/DataType"),
+                    'timestamp': int(get("Acquisition/Timestamp")),
+                    'filename': str(Path(filepath).stem)
+                }
+                # Fallback falls PixelSpacing = 0:
+                for axis in ['x', 'y', 'z']:
+                    if meta['spacing_mm'][axis] == 0.0:
+                        if meta['size_px'][axis] > 0 and meta['fov_mm'][axis] > 0:
+                            meta['spacing_mm'][axis] = meta['fov_mm'][axis] / meta['size_px'][axis]
+                        else:
+                            print(f"[WARN] Invalid pixel size for axis {axis}, fallback not possible")
+
+            except (TypeError, ValueError, AttributeError) as e:
+                print(f"[ERROR] Failed to parse metadata: {e}. Process terminated. Please check Header.xml file.")
+                return
+
+            # reformat intensity.data into np.ndarray
+            with open(data_path, 'rb') as f:
+                intensity_data_raw = f.read()
+
+            shape_raw = (meta['size_px']['y'], meta['size_px']['x'], meta['size_px']['z']) # ZXY
+            data = np.frombuffer(intensity_data_raw, dtype=np.float32).copy().reshape(shape_raw)
+            data = data.transpose(0, 2, 1)
+        
+    finally:
+        if renamed and oct_as_zip.exists:
+            oct_as_zip.rename(filepath)
+
+    print(meta)
+    return data, meta
+
+def save(stack: np.ndarray, stack_metadata: dict, binary_stack: np.ndarray, output_dir: Path) -> None:
+    print(stack_metadata)
+    spacing = stack_metadata['spacing_mm']
+    if any(v == 0 for v in spacing.values()):
+        affine = np.diag([0.01, 0.01, 0.01, 1.0])
+        print("[WARN]: Fallback values used for pixel spacing!")
+    else:
+        affine = np.diag([spacing['x'], spacing['y'], spacing['z'], 1.0])
+
+    nii_stack = nib.nifti1.Nifti1Image(stack.astype(np.float32), affine)
+    nii_binary = nib.nifti1.Nifti1Image(binary_stack.astype(np.uint8), affine)
+
+    # metadaten für nifti header
+    model = stack_metadata['instrument']['model']
+    wl = stack_metadata['instrument']['central_wavelength']
+    timestamp = stack_metadata['timestamp']
+    descrip = f"{model}_{wl:.0f}nm_{timestamp}"
+
+    nii_stack.header['descrip'] = descrip[:80]
+    nii_binary.header['descrip'] = descrip[:80]
+
+    # speichern
+    output_dir.mkdir(parents=True, exist_ok=True)
+    nib.save(nii_stack, output_dir / f"{stack_metadata['filename']}.nii.gz") # type: ignore
+    nib.save(nii_binary, output_dir / f"{stack_metadata['filename']}_mask.nii.gz") # type: ignore
+
 # Labeling-Functions
-def median_blur(img, filter_size=3):
-    """
-    Apply median blur to a 3D image stack.
+## processing functions
+def median_blur(stack: np.ndarray, filter_size: int) -> np.ndarray:
+    return scipy.ndimage.median_filter(stack, size=(1, filter_size, filter_size)) # TODO: consider fast-median-filters module for performance improvements
 
-    Parameters
-    ----------
-    img : numpy.ndarray
-        The 3D image stack as a numpy array (slices, height, width)
-    filter_size : int, optional
-        Size of the median filter (default is 3)
+def roi_filter(stack: np.ndarray, roi_width: int) -> np.ndarray:
+    return scipy.ndimage.uniform_filter1d(stack, roi_width, axis=2, mode='reflect')
 
-    Returns
-    -------
-    numpy.ndarray
-        The blurred image stack as a numpy array
-    """
-    if len(img.shape) != 3:
-        raise ValueError("Input image must be a 3D stack (slices, height, width)")
-    
-    return scipy.ndimage.median_filter(img, size=(1, filter_size, filter_size)) # TODO: consider fast-median-filters module for performance improvements
+def roi_filter_2D(stack: np.ndarray, roi_size: int) -> np.ndarray:
+    return scipy.ndimage.uniform_filter(stack, size=(roi_size, roi_size), axes=(0, 2), mode='reflect') # type: ignore
 
-def locate_window(img, region_of_interest_size: int = 11, vertical_offset: int = 0, vertical_min: int = 0, vertical_max: int = 0):
-    # 1. precompute roi-mean für ganzen stack:
-    filtered = scipy.ndimage.uniform_filter1d(img, size=region_of_interest_size, axis=2, mode='reflect')
-    # 2. maximum intensity in bestimmtem y-bereich finden:
-    y_coords = np.argmax(filtered[:, vertical_min:vertical_max, :], axis=1)
-    # apply y-offset
-    y_coords += vertical_offset
+def locate_window(stack: np.ndarray, ymin: int, ymax: int, y_offset: int) -> np.ndarray:
+    y_coords = np.argmax(stack[:, ymin:ymax, :], axis=1)
+    y_coords += y_offset
 
     return y_coords
 
-def zero_out_window(img, window_coords):
-    yy = np.arange(img.shape[1])  # Create a range for y-coordinates
+def zero_out_window(stack: np.ndarray, window_coords: np.ndarray) -> np.ndarray:
+    yy = np.arange(stack.shape[1])  # Create a range for y-coordinates
     yy = yy.reshape(1, -1, 1)  # Reshape to ensure it can be broadcasted
-    copy = img.copy()  # Create a copy of the image to avoid modifying the original
+    copy = stack.copy()  # Create a copy of the image to avoid modifying the original
     copy[yy < window_coords[:, np.newaxis, :]] = 0 # Set pixels above the window to zero
     return copy
 
-def locate_substratum(img, start_x=0, roi_width=20, vertical_offset=0, vertical_min=0, vertical_max=0):
-    # 1. precompute roi-mean für ganzen stack:
-    filtered = scipy.ndimage.uniform_filter1d(img, size=roi_width, axis=2, mode='reflect')
-    # 2. maximum intensity in bestimmtem y-bereich finden:
-    y_coords = np.argmax(filtered[:, vertical_min:vertical_max, :], axis=1)
-    y_coords = y_coords + vertical_min # Adjust y-coordinates based on vertical_min, since argmax returns indices relative to the sliced region
-    # apply y-offset
-    y_coords += vertical_offset
+def locate_substratum(stack: np.ndarray, ymin: int, ymax: int, y_offset: int) -> np.ndarray:
+    y_coords = np.argmax(stack[:, ymin:ymax, :], axis=1)
+    y_coords = y_coords + ymin + y_offset
 
     return y_coords
 
-def zero_out_substratum(img, substratum_coords):
-    yy = np.arange(img.shape[1])  # Create a range for y-coordinates
+def zero_out_substratum(stack: np.ndarray, substratum_coords: np.ndarray) -> np.ndarray:
+    yy = np.arange(stack.shape[1])  # Create a range for y-coordinates
     yy = yy.reshape(1, -1, 1)  # Reshape to ensure it can be broadcasted
-    copy = img.copy()  # Create a copy of the image to avoid modifying the original
+    copy = stack.copy()  # Create a copy of the image to avoid modifying the original
     copy[yy >= substratum_coords[:, np.newaxis, :]] = 0  # Set pixels below the substratum to zero
     return copy
 
-def binarize_ignore_zeros(img: np.ndarray):
+def get_threshold(stack: np.ndarray):
     """
     Create a binary mask from an image stack, ignoring zero pixels.
     """
 
-    nonzero_values = img[img > 0]  # Extract non-zero values
+    nonzero_values = stack[stack > 0]  # Extract non-zero values
 
     thresh = filters.threshold_triangle(nonzero_values)  # Use triangle thresholding on non-zero values
 
-    img_binary = img > thresh  # Create binary mask based on Yen's threshold
-    img_binary = img_binary.astype(np.uint8) * 255  # Convert boolean mask to uint8 (0 or 255)
-    img_binary[img == 0] = 0  # Ensure zero pixels remain zero in the binary mask
-    img_binary[img_binary == 255] = 1  # Convert to binary mask with values 0 and 1
+    return thresh
 
-    return img_binary
+def rm_outliers(stack: np.ndarray, size: int) -> np.ndarray:
+    bool_stack = stack.astype(bool)
 
-def save_pngs(original_stack: np.ndarray, binary_stack: np.ndarray, original_filename: str, output_directory: str) -> None:
-    """
-    Save selected slices of the stack and its corresponding mask as PNG files.
-    """
-    assert original_stack.shape == (
-        binary_stack.shape,
-        f"Stacks don't have the same (slices, height, width) shape: Original ({original_stack.shape}) vs Binary ({binary_stack.shape})"
-    )
-
-    basedir = os.path.join(output_directory, original_filename)
-    os.makedirs(basedir, exist_ok=True)
-
-    Bscandir = os.path.join(basedir, 'Bscans')
-    Masksdir = os.path.join(basedir, 'Masks')
-    os.makedirs(Bscandir, exist_ok=True)
-    os.makedirs(Masksdir, exist_ok=True)
-    for i, (img, mask) in enumerate(zip(original_stack, binary_stack, strict=True)):
-        img_filename = f"{original_filename}_Bscan_{i:03d}.png"
-        mask_filename = f"{original_filename}_Bscan_{i:03d}_mask.png"
-        tiff.imwrite(os.path.join(Bscandir, img_filename), img)
-        tiff.imwrite(os.path.join(Masksdir, mask_filename), mask)
-
+    stack_transformed = morphology.remove_small_objects(bool_stack, size, connectivity=1)
+    
+    stack = stack_transformed.astype(np.uint8)
+    
+    return stack
