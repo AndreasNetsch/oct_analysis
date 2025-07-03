@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="oct_analysis",
-    version="1.0.1",
+    version="1.1.0",
     package_dir={"": "src"},
     packages=find_packages(where="src", include=["oct_analysis", "oct_analysis.*"]),
     install_requires=[

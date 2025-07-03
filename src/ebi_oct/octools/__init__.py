@@ -2,7 +2,7 @@
 oct_analysis - A library for image processing functions
 """
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 from ebi_oct.octools.processing_functions import (
     read_tiff, save_tiff, select_tiff_folder, save_results_to_csv,

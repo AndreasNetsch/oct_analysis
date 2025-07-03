@@ -1,5 +1,13 @@
 Changelog
 =========
+Version 1.1.0 (2025-07-03)
+--------------------------
+
+* Added napari plugin
+* Added support for OCT files
+* Added support for TIFF files
+* Added support for binary masks
+* Added support for two-point line detection
 
 Version 1.0.1 (2024-05-20)
 -------------------------
