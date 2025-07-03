@@ -76,7 +76,7 @@ def read_tiff(file_path: str) -> tuple[np.ndarray, str, dict]:
 
         return img_stack, filename, metadata
     except Exception as e:
-        raise ValueError(f"Error reading TIFF file: {str(e)}")
+        raise ValueError(f"Error reading TIFF file: {str(e)}") from e
 
 def _normalize_tiff(tiff_stack: np.ndarray) -> np.ndarray:
     """
@@ -185,7 +185,7 @@ def save_tiff(img, file_path, filename, metadata=None):
             )
 
     except Exception as e:
-        raise ValueError(f"Error saving TIFF file: {str(e)}")
+        raise ValueError(f"Error saving TIFF file: {str(e)}") from e
 
 def select_tiff_folder():
     """
@@ -578,8 +578,8 @@ def binary_mask(img, thresholding_method, contrast, blurred, blur_size, outliers
     4. Removal of small objects (outliers)
     """
     processed_frames = []
-    for i, image in enumerate(img):
-        if blurred == True:
+    for _, image in enumerate(img):
+        if blurred:
             # Apply Gaussian blur before contrast enhancement
             image_blurred = cv2.GaussianBlur(image, (blur_size,blur_size), 0)  # Kernel size (5,5), has to be positive and odd
         else:
@@ -1073,8 +1073,11 @@ def save_pngs(original_stack: np.ndarray, binary_stack: np.ndarray, original_fil
     """
     Save selected slices of the stack and its corresponding mask as PNG files.
     """
-    assert original_stack.shape == binary_stack.shape, f"Stacks don't have the same (slices, height, width) shape: Original ({original_stack.shape}) vs Binary ({binary_stack.shape})"
-    
+    assert original_stack.shape == (
+        binary_stack.shape,
+        f"Stacks don't have the same (slices, height, width) shape: Original ({original_stack.shape}) vs Binary ({binary_stack.shape})"
+    )
+
     basedir = os.path.join(output_directory, original_filename)
     os.makedirs(basedir, exist_ok=True)
 
@@ -1082,7 +1085,7 @@ def save_pngs(original_stack: np.ndarray, binary_stack: np.ndarray, original_fil
     Masksdir = os.path.join(basedir, 'Masks')
     os.makedirs(Bscandir, exist_ok=True)
     os.makedirs(Masksdir, exist_ok=True)
-    for i, (img, mask) in enumerate(zip(original_stack, binary_stack)):
+    for i, (img, mask) in enumerate(zip(original_stack, binary_stack, strict=True)):
         img_filename = f"{original_filename}_Bscan_{i:03d}.png"
         mask_filename = f"{original_filename}_Bscan_{i:03d}_mask.png"
         tiff.imwrite(os.path.join(Bscandir, img_filename), img)

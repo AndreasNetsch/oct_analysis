@@ -1,8 +1,9 @@
-from torch.utils.data import Dataset
 import os
+
 import numpy as np
 from PIL import Image
 import torch
+from torch.utils.data import Dataset
 
 
 class OCTDataset(Dataset):
@@ -11,11 +12,12 @@ class OCTDataset(Dataset):
         self.image_dir = image_dir
         self.mask_dir = mask_dir
         self.transform = transform
-        self.image_filenames = sorted(f for f in os.listdir(image_dir) if f.endswith('.png')) # stores just the filenames as a list
-        self.masks_filenames = sorted(f for f in os.listdir(mask_dir) if f.endswith('.png')) # stores just the filenames as a list
+        self.image_filenames = sorted(f for f in os.listdir(image_dir) if f.endswith('.png'))
+        self.masks_filenames = sorted(f for f in os.listdir(mask_dir) if f.endswith('.png'))
 
         if len(self.image_filenames) != len(self.masks_filenames):
-            raise ValueError(f'Number of images ({len(self.image_filenames)}) does not match number of masks ({len(self.masks_filenames)})')
+            raise ValueError(f'Number of images ({len(self.image_filenames)}) '
+                            f'does not match number of masks ({len(self.masks_filenames)})')
     #
 
     def __len__(self):
@@ -56,7 +58,7 @@ class OCTDataset(Dataset):
         image, mask = self.crop(image, mask) # crops to ensure divisibility by 32
 
         if self.transform:
-            augmented = self.transform(image=image, mask=mask)
+            augmented = self.transform(image=image, mask=mask) # type: ignore
             image = augmented['image']
             mask = augmented['mask']
 
@@ -66,16 +68,3 @@ class OCTDataset(Dataset):
         return image, mask
     #
 ##
-
-def test_dataloader():
-    mask_dir = r'C:\Users\sx1218\Arbeitsordner\24.25-ML-OCT\data\biofilm\stock\train_masks\train'
-    image_dir = r'C:\Users\sx1218\Arbeitsordner\24.25-ML-OCT\data\biofilm\stock\train_images\train'
-
-    dataset = OCTDataset(image_dir, mask_dir)
-
-    print(f'Dataset length = {len(dataset)}')
-
-    for i in range(2):
-        image, mask = dataset[i]
-        print(f'sample {i}: Image shape: {image.shape}, Mask shape: {mask.shape}')
-#
