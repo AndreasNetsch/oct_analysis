@@ -1159,8 +1159,7 @@ def rm_outliers(stack: np.ndarray, size: int) -> np.ndarray:
     bool_stack = stack.astype(bool)
 
     stack_transformed = morphology.remove_small_objects(bool_stack, size, connectivity=1)
-    stack_transformed = morphology.remove_small_holes(stack_transformed, size, connectivity=1)
-    
+
     stack = stack_transformed.astype(np.uint8)
-    
+
     return stack
