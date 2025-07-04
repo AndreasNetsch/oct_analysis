@@ -2,11 +2,41 @@
 
 oct_analysis is a Python library for the processing of image data for optical methods (foremost optical coherence tomography (OCT)).
 
-## Installation
+## Quick Setup Guide (Currently only for Windows)
 
-```bash
-pip install oct_analysis
+# for Users (Windows/Powershell)
+
+First, you need to install uv (a modern python package manager)
+1) Open Windows Powershell (PS)
+2) Paste this into PS and hit enter:
+```PS
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/astral-sh/uv/releases/download/0.7.19/uv-installer.ps1 | iex
 ```
+3) add uv to you PATH as recommended by the promt after installing uv
+4) execute this line in PS:
+```PS
+https://raw.githubusercontent.com/AndreasNetsch/oct_analysis/main/setup/setup_user.ps1
+```
+5) Done!
+
+# for Contributors/Developers (Windows/Powershell)
+First, you need to install uv (a modern python package manager)
+1) Open Windows Powershell (PS)
+2) Paste this into PS and hit enter:
+```PS
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/astral-sh/uv/releases/download/0.7.19/uv-installer.ps1 | iex
+```
+3) add uv to you PATH as recommended by the promt after installing uv
+
+Second, you need to install git -> https://git-scm.com/downloads
+
+Then continue:
+4) execute this line in PS:
+```PS
+https://raw.githubusercontent.com/AndreasNetsch/oct_analysis/main/setup/setup_dev.ps1
+```
+5) Done!
+
 
 ## Features
 
@@ -35,52 +65,6 @@ from oct_analysis import (
 )
 ```
 
-## Collaboration and Development
-
-### Setup
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/AndreasNetsch/oct_analysis.git
-cd oct_analysis
-```
-
-2. Create a virtual environment and install development dependencies:
-
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -e ".[dev]"
-```
-
-### Testing
-
-Run tests with pytest:
-
-```bash
-pytest
-```
-
-### Code Formatting and Linting
-
-This project uses pre-commit hooks to ensure code quality. After installing the development dependencies, set up the pre-commit hooks:
-
-```bash
-pre-commit install
-```
-
-This will automatically format your code with Black and check it with Flake8 before each commit. You can also run the hooks manually:
-
-```bash
-pre-commit run --all-files
-```
-
-### Building the package
-
-```bash
-python -m build
-```
 
 ### Documentation
 

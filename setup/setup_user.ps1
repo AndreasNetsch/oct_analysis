@@ -1,6 +1,6 @@
 # Optional: Pfad zum Zielordner
 $targetDir = "$HOME\napari"
-$packageName = "ebi_oct"
+$packageName = "oct-analysis"
 
 # Ordner erstellen
 New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
@@ -10,12 +10,15 @@ Set-Location $targetDir
 uv venv
 
 # Aktivieren (manuell durch User, Anleitung folgt)
-Write-Host "`n🌀 Virtuelle Umgebung wurde erstellt. Aktiviere sie mit:"
-Write-Host "    .\.venv\Scripts\Activate.ps1`n"
+Write-Host "`n Virtual environment was created.`n"
 
 # Paket installieren
-Write-Host "📦 Installiere Paket '$packageName' ..."
+Write-Host " Installing package: '$packageName' ..."
 .\.venv\Scripts\uv.exe pip install $packageName
 
-Write-Host "`n✅ Fertig! Starte napari mit:"
-Write-Host "    napari"
+Write-Host "`n Done!`n"
+
+# venv aktivieren
+Write-Host "`n Opening new terminal inside virtual environment ..."
+Start-Process powershell -ArgumentList "-NoExit", "-Command", ". .\.venv\Scripts\activate"
+Write-Host "`n You can close this terminal now."
