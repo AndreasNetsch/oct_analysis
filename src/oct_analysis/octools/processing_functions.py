@@ -1082,7 +1082,6 @@ def load_oct(filepath: Path):
     return data, meta
 
 def save(stack: np.ndarray, stack_metadata: dict, binary_stack: np.ndarray, output_dir: Path) -> None:
-    print(stack_metadata)
     spacing = stack_metadata['spacing_mm']
     if any(v == 0 for v in spacing.values()):
         affine = np.diag([0.01, 0.01, 0.01, 1.0])
