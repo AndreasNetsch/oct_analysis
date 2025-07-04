@@ -5,7 +5,7 @@ import numpy as np
 from qtpy.QtWidgets import QFileDialog
 from pathlib import Path
 
-from ebi_oct.octools import processing_functions as ip
+from oct_analysis.octools import processing_functions as ip
 
 @magicgui(call_button="Load OCT")
 def load_oct(viewer: napari.Viewer):

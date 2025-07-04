@@ -1,5 +1,5 @@
 def main():
-    from ebi_oct.napari_plugin import widgets
+    from oct_analysis.napari_plugin import widgets
     from qtpy.QtWidgets import QScrollArea, QWidget, QVBoxLayout
     from magicgui.widgets import Container
 
